@@ -18,6 +18,8 @@ import {
   FolderOpen,
   Tag,
   GitBranch,
+  FileText,
+  Library,
 } from "lucide-react";
 import { signOut } from "@/app/admin/login/actions";
 import type { AdminSession } from "@/lib/admin";
@@ -44,6 +46,8 @@ const navItems: NavItem[] = [
     children: [
       { label: "Courses", href: "/admin/content", icon: FolderOpen },
       { label: "Content Manager", href: "/admin/content/manager", icon: GitBranch },
+      { label: "Test Series", href: "/admin/content/tests", icon: FileText },
+      { label: "Question Bank", href: "/admin/content/questions", icon: Library },
       { label: "Categories", href: "/admin/content/categories", icon: Tag },
     ],
   },

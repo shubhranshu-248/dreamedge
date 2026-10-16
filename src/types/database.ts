@@ -121,16 +121,62 @@ export interface AdminUser {
   last_login_at: string | null;
 }
 
+export type TestStatus = "draft" | "published" | "archived";
+export type Difficulty = "easy" | "medium" | "hard";
+
 export interface Test {
   id: string;
   course_id: string | null;
   name: string;
-  description: string | null;
-  duration_minutes: number;
-  total_marks: number;
+  instructions: string | null;
+  duration_min: number;
   max_attempts: number;
-  status: ContentStatus;
+  shuffle: boolean;
+  pass_pct: number;
+  show_results: boolean;
+  certificate_enabled: boolean;
+  negative_marking: boolean;
+  status: TestStatus;
   created_at: string;
+  updated_at: string;
+}
+
+export interface TestWithCourse extends Test {
+  course: { id: string; name: string } | null;
+  question_count: number;
+}
+
+export interface Question {
+  id: string;
+  test_id: string;
+  type: QuestionType;
+  content: string;
+  options: Record<string, unknown> | null;
+  correct_answer: string | null;
+  positive_marks: number;
+  negative_marks: number;
+  difficulty: Difficulty;
+  topic_tag: string | null;
+  image_url: string | null;
+  hint: string | null;
+  weight: number;
+}
+
+export interface QuestionBankItem {
+  id: string;
+  type: QuestionType;
+  content: string;
+  options: Record<string, unknown> | null;
+  correct_answer: string | null;
+  positive_marks: number;
+  negative_marks: number;
+  difficulty: Difficulty;
+  topic_tag: string | null;
+  image_url: string | null;
+  hint: string | null;
+  usage_count: number;
+  created_at: string;
+  updated_at: string;
 }
 
 export interface LiveClass {
