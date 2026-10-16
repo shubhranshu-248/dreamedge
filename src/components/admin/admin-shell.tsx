@@ -15,19 +15,36 @@ import {
   Menu,
   X,
   ChevronDown,
+  FolderOpen,
+  Tag,
 } from "lucide-react";
 import { signOut } from "@/app/admin/login/actions";
 import type { AdminSession } from "@/lib/admin";
 
-interface NavItem {
+interface NavChild {
   label: string;
   href: string;
   icon: React.ElementType;
 }
 
+interface NavItem {
+  label: string;
+  href: string;
+  icon: React.ElementType;
+  children?: NavChild[];
+}
+
 const navItems: NavItem[] = [
   { label: "Dashboard", href: "/admin", icon: LayoutDashboard },
-  { label: "Content", href: "/admin/content", icon: BookOpen },
+  {
+    label: "Content",
+    href: "/admin/content",
+    icon: BookOpen,
+    children: [
+      { label: "Courses", href: "/admin/content", icon: FolderOpen },
+      { label: "Categories", href: "/admin/content/categories", icon: Tag },
+    ],
+  },
   { label: "Live Classes", href: "/admin/live-classes", icon: Video },
   { label: "Students", href: "/admin/students", icon: Users },
   { label: "Revenue", href: "/admin/revenue", icon: IndianRupee },
@@ -77,19 +94,43 @@ export function AdminShell({
           const Icon = item.icon;
           const active = isActive(item.href);
           return (
-            <Link
-              key={item.href}
-              href={item.href}
-              onClick={() => setSidebarOpen(false)}
-              className={`flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
-                active
-                  ? "bg-[#F26A21]/10 text-[#F26A21]"
-                  : "text-muted-foreground hover:bg-accent hover:text-foreground"
-              }`}
-            >
-              <Icon className="h-4 w-4 shrink-0" />
-              {item.label}
-            </Link>
+            <div key={item.href}>
+              <Link
+                href={item.href}
+                onClick={() => setSidebarOpen(false)}
+                className={`flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
+                  active
+                    ? "bg-[#F26A21]/10 text-[#F26A21]"
+                    : "text-muted-foreground hover:bg-accent hover:text-foreground"
+                }`}
+              >
+                <Icon className="h-4 w-4 shrink-0" />
+                {item.label}
+              </Link>
+              {item.children && active && (
+                <div className="ml-7 mt-1 space-y-0.5 border-l border-border pl-3">
+                  {item.children.map((child) => {
+                    const ChildIcon = child.icon;
+                    const childActive = pathname === child.href;
+                    return (
+                      <Link
+                        key={child.href}
+                        href={child.href}
+                        onClick={() => setSidebarOpen(false)}
+                        className={`flex items-center gap-2 rounded-md px-2 py-1.5 text-xs font-medium transition-colors ${
+                          childActive
+                            ? "text-[#F26A21]"
+                            : "text-muted-foreground hover:text-foreground"
+                        }`}
+                      >
+                        <ChildIcon className="h-3.5 w-3.5 shrink-0" />
+                        {child.label}
+                      </Link>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
           );
         })}
       </nav>
