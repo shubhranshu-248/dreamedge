@@ -25,30 +25,39 @@ export async function updateSession(request: NextRequest) {
     }
   );
 
-  // Refresh the session
   const {
     data: { user },
   } = await supabase.auth.getUser();
 
   const { pathname } = request.nextUrl;
 
-  // Admin routes (except login page) require authentication
   if (pathname.startsWith("/admin") && !pathname.startsWith("/admin/login")) {
     if (!user) {
       const url = request.nextUrl.clone();
       url.pathname = "/admin/login";
       return NextResponse.redirect(url);
     }
+
+    const { data: adminUser } = await supabase
+      .from("admin_users")
+      .select("id, is_active")
+      .eq("user_id", user.id)
+      .eq("is_active", true)
+      .single();
+
+    if (!adminUser) {
+      const url = request.nextUrl.clone();
+      url.pathname = "/admin/login";
+      return NextResponse.redirect(url);
+    }
   }
 
-  // If logged in and visiting /admin/login, redirect to dashboard
   if (pathname === "/admin/login" && user) {
     const url = request.nextUrl.clone();
     url.pathname = "/admin";
     return NextResponse.redirect(url);
   }
 
-  // Student dashboard routes require authentication
   if (pathname.startsWith("/dashboard") && !user) {
     const url = request.nextUrl.clone();
     url.pathname = "/login";
