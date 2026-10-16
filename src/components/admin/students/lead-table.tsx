@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useState, useTransition, useCallback, useRef, useEffect } from "react";
 import {
   Table,
   TableBody,
@@ -69,24 +69,43 @@ export function LeadTable({ initialData }: LeadTableProps) {
   const [editingRemarks, setEditingRemarks] = useState<string | null>(null);
   const [remarksValue, setRemarksValue] = useState("");
   const [isPending, startTransition] = useTransition();
+  const requestIdRef = useRef(0);
+  const debounceRef = useRef<NodeJS.Timeout | null>(null);
 
-  const loadData = (overrides: Record<string, string> = {}) => {
-    startTransition(async () => {
-      const result = await fetchLeads({
-        search: overrides.search ?? search,
-        status: overrides.status ?? statusFilter,
-        source: overrides.source ?? sourceFilter,
+  useEffect(() => {
+    return () => {
+      if (debounceRef.current) clearTimeout(debounceRef.current);
+    };
+  }, []);
+
+  const loadData = useCallback(
+    (overrides: Record<string, string> = {}) => {
+      const requestId = ++requestIdRef.current;
+      startTransition(async () => {
+        const result = await fetchLeads({
+          search: overrides.search ?? search,
+          status: overrides.status ?? statusFilter,
+          source: overrides.source ?? sourceFilter,
+        });
+        if (requestId !== requestIdRef.current) return;
+        if (!result.error) {
+          setData(result.data as Lead[]);
+        }
       });
-      if (!result.error) {
-        setData(result.data as Lead[]);
-      }
-    });
-  };
+    },
+    [search, statusFilter, sourceFilter]
+  );
 
-  const handleSearch = (value: string) => {
-    setSearch(value);
-    loadData({ search: value });
-  };
+  const handleSearch = useCallback(
+    (value: string) => {
+      setSearch(value);
+      if (debounceRef.current) clearTimeout(debounceRef.current);
+      debounceRef.current = setTimeout(() => {
+        loadData({ search: value });
+      }, 350);
+    },
+    [loadData]
+  );
 
   const handleStatusUpdate = (id: string, status: string) => {
     startTransition(async () => {

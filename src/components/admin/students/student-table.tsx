@@ -61,8 +61,11 @@ export function StudentTable({ initialData, initialCount, courses }: StudentTabl
   const pageSize = 20;
   const totalPages = Math.ceil(totalCount / pageSize);
 
+  const requestIdRef = useRef(0);
+
   const loadData = useCallback(
     (overrides: Record<string, unknown> = {}) => {
+      const requestId = ++requestIdRef.current;
       startTransition(async () => {
         const result = await fetchStudents({
           search: (overrides.search as string) ?? search,
@@ -74,6 +77,7 @@ export function StudentTable({ initialData, initialCount, courses }: StudentTabl
           page: (overrides.page as number) ?? page,
           pageSize,
         });
+        if (requestId !== requestIdRef.current) return;
         if (result.error) {
           toast.error(result.error);
           return;
