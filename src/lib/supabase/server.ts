@@ -1,6 +1,9 @@
 import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
 
+// After running `npm run db:types`, uncomment to enable typed queries:
+// import type { Database } from "@/types/supabase";
+
 export async function createClient() {
   const cookieStore = await cookies();
 

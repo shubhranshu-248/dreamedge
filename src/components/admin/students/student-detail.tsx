@@ -38,6 +38,16 @@ import {
 import { toast } from "sonner";
 import { fetchStudentDetail, updateStudentStatus } from "@/app/admin/(panel)/students/actions";
 
+function getInitials(name: string | null | undefined): string {
+  if (!name?.trim()) return "?";
+  return name
+    .trim()
+    .split(/\s+/)
+    .slice(0, 2)
+    .map((part) => part[0]?.toUpperCase() ?? "")
+    .join("");
+}
+
 interface StudentDetailProps {
   studentId: string | null;
   onClose: () => void;
@@ -61,8 +71,11 @@ export function StudentDetail({ studentId, onClose, onStatusChange }: StudentDet
       return;
     }
 
+    let cancelled = false;
     setLoading(true);
+
     fetchStudentDetail(studentId).then((result) => {
+      if (cancelled) return;
       setLoading(false);
       if (result.error) {
         toast.error(result.error);
@@ -70,6 +83,10 @@ export function StudentDetail({ studentId, onClose, onStatusChange }: StudentDet
       }
       setDetail(result.data as Record<string, unknown>);
     });
+
+    return () => {
+      cancelled = true;
+    };
   }, [studentId]);
 
   const student = detail?.student as Record<string, unknown> | undefined;
@@ -123,12 +140,7 @@ export function StudentDetail({ studentId, onClose, onStatusChange }: StudentDet
             <SheetHeader className="border-b border-border pb-4">
               <div className="flex items-start gap-4">
                 <div className="flex items-center justify-center w-12 h-12 rounded-full bg-[#16223B] text-white text-sm font-semibold shrink-0">
-                  {(student.full_name as string)
-                    .split(" ")
-                    .map((n) => n[0])
-                    .join("")
-                    .slice(0, 2)
-                    .toUpperCase()}
+                  {getInitials(student.full_name as string)}
                 </div>
                 <div className="flex-1 min-w-0">
                   <SheetTitle className="text-lg">{student.full_name as string}</SheetTitle>

@@ -30,7 +30,7 @@ export async function fetchStudents(filters: StudentFilters = {}) {
 
     let query = supabase
       .from("students")
-      .select("*, enrollments(id)", { count: "exact" });
+      .select("id, full_name, email, phone, avatar_url, class, board, city, status, created_at, enrollments(id)", { count: "exact" });
 
     if (filters.search) {
       const safe = sanitizeSearch(filters.search);
@@ -104,7 +104,7 @@ export async function fetchStudentDetail(studentId: string) {
 
     const { data: student, error } = await supabase
       .from("students")
-      .select("*")
+      .select("id, user_id, full_name, email, phone, avatar_url, class, board, city, state, school, status, parent_name, parent_phone, address, referral_code, wallet_balance, created_at, updated_at")
       .eq("id", studentId)
       .single();
 
@@ -132,7 +132,7 @@ export async function fetchStudentDetail(studentId: string) {
         .order("created_at", { ascending: false }),
       supabase
         .from("audit_log")
-        .select("*")
+        .select("id, action, entity_type, entity_id, created_at")
         .eq("user_id", student.user_id)
         .order("created_at", { ascending: false })
         .limit(30),
@@ -290,7 +290,7 @@ export async function fetchLeads(filters: { search?: string; status?: string; so
 
     let query = supabase
       .from("leads")
-      .select("*", { count: "exact" });
+      .select("id, name, email, phone, source, status, remarks, created_at", { count: "exact" });
 
     if (filters.search) {
       const safe = sanitizeSearch(filters.search);
@@ -407,7 +407,7 @@ export async function convertLeadToStudent(leadId: string) {
 
     const { data: lead, error: fetchError } = await supabase
       .from("leads")
-      .select("*")
+      .select("id, name, email, phone, source, status")
       .eq("id", leadId)
       .single();
 
@@ -449,7 +449,7 @@ export async function fetchTestimonials() {
 
     const { data, error } = await supabase
       .from("testimonials")
-      .select("*")
+      .select("id, student_name, content, video_url, type, year, course_name, marks_or_rank, photo_url, is_topper, is_visible, weight, created_at")
       .order("weight", { ascending: true });
 
     if (error) {

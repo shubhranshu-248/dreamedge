@@ -2,6 +2,7 @@ import { Suspense } from "react";
 import { connection } from "next/server";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
+import { ErrorBoundary } from "@/components/ui/error-boundary";
 import { KpiCards, KpiCardsSkeleton } from "@/components/admin/dashboard/kpi-cards";
 import { RevenueChart } from "@/components/admin/dashboard/revenue-chart";
 import { EnrollmentChart } from "@/components/admin/dashboard/enrollment-chart";
@@ -56,30 +57,40 @@ async function Dashboard() {
         <p className="text-sm text-muted-foreground">{today}</p>
       </div>
 
-      <Suspense fallback={<KpiCardsSkeleton />}>
-        <KpiSection admin={admin} />
-      </Suspense>
+      <ErrorBoundary>
+        <Suspense fallback={<KpiCardsSkeleton />}>
+          <KpiSection admin={admin} />
+        </Suspense>
+      </ErrorBoundary>
 
       <div className="grid gap-4 lg:grid-cols-2">
-        <Suspense fallback={<ChartSkeleton />}>
-          <RevenueSection admin={admin} />
-        </Suspense>
-        <Suspense fallback={<ChartSkeleton />}>
-          <EnrollmentSection />
-        </Suspense>
+        <ErrorBoundary>
+          <Suspense fallback={<ChartSkeleton />}>
+            <RevenueSection admin={admin} />
+          </Suspense>
+        </ErrorBoundary>
+        <ErrorBoundary>
+          <Suspense fallback={<ChartSkeleton />}>
+            <EnrollmentSection />
+          </Suspense>
+        </ErrorBoundary>
       </div>
 
       <div className="grid gap-4 lg:grid-cols-3">
         <div className="lg:col-span-2">
-          <Suspense fallback={<CoursePerformanceSkeleton />}>
-            <CoursePerformanceSection admin={admin} />
-          </Suspense>
+          <ErrorBoundary>
+            <Suspense fallback={<CoursePerformanceSkeleton />}>
+              <CoursePerformanceSection admin={admin} />
+            </Suspense>
+          </ErrorBoundary>
         </div>
         <div className="space-y-4">
           <QuickActions role={admin.role_name} />
-          <Suspense fallback={<RecentActivitySkeleton />}>
-            <ActivitySection admin={admin} />
-          </Suspense>
+          <ErrorBoundary>
+            <Suspense fallback={<RecentActivitySkeleton />}>
+              <ActivitySection admin={admin} />
+            </Suspense>
+          </ErrorBoundary>
         </div>
       </div>
     </div>

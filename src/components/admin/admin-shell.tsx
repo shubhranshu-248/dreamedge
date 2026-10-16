@@ -27,6 +27,7 @@ import {
 } from "lucide-react";
 import { signOut } from "@/app/admin/login/actions";
 import type { AdminSession } from "@/lib/admin";
+import type { UserRole } from "@/types/database";
 
 interface NavChild {
   label: string;
@@ -38,15 +39,26 @@ interface NavItem {
   label: string;
   href: string;
   icon: React.ElementType;
+  roles: UserRole[];
   children?: NavChild[];
 }
 
+const ALL_ROLES: UserRole[] = [
+  "super_admin",
+  "content_creator",
+  "teacher",
+  "accountant",
+  "support_staff",
+  "technical",
+];
+
 const navItems: NavItem[] = [
-  { label: "Dashboard", href: "/admin", icon: LayoutDashboard },
+  { label: "Dashboard", href: "/admin", icon: LayoutDashboard, roles: ALL_ROLES },
   {
     label: "Content",
     href: "/admin/content",
     icon: BookOpen,
+    roles: ["super_admin", "content_creator"],
     children: [
       { label: "Courses", href: "/admin/content", icon: FolderOpen },
       { label: "Content Manager", href: "/admin/content/manager", icon: GitBranch },
@@ -55,11 +67,17 @@ const navItems: NavItem[] = [
       { label: "Categories", href: "/admin/content/categories", icon: Tag },
     ],
   },
-  { label: "Live Classes", href: "/admin/live-classes", icon: Video },
+  {
+    label: "Live Classes",
+    href: "/admin/live-classes",
+    icon: Video,
+    roles: ["super_admin", "teacher"],
+  },
   {
     label: "Students",
     href: "/admin/students",
     icon: Users,
+    roles: ["super_admin", "teacher", "support_staff"],
     children: [
       { label: "All Students", href: "/admin/students", icon: UserSearch },
       { label: "Analytics", href: "/admin/students/analytics", icon: BarChart3 },
@@ -67,10 +85,35 @@ const navItems: NavItem[] = [
       { label: "Testimonials", href: "/admin/students/testimonials", icon: Award },
     ],
   },
-  { label: "Revenue", href: "/admin/revenue", icon: IndianRupee },
-  { label: "Engage", href: "/admin/engage", icon: Bell },
-  { label: "Settings", href: "/admin/settings", icon: Settings },
+  {
+    label: "Revenue",
+    href: "/admin/revenue",
+    icon: IndianRupee,
+    roles: ["super_admin", "accountant"],
+  },
+  {
+    label: "Engage",
+    href: "/admin/engage",
+    icon: Bell,
+    roles: ["super_admin", "support_staff"],
+  },
+  {
+    label: "Settings",
+    href: "/admin/settings",
+    icon: Settings,
+    roles: ["super_admin", "technical"],
+  },
 ];
+
+function getInitials(name: string | null | undefined): string {
+  if (!name?.trim()) return "?";
+  return name
+    .trim()
+    .split(/\s+/)
+    .slice(0, 2)
+    .map((part) => part[0]?.toUpperCase() ?? "")
+    .join("");
+}
 
 function roleLabel(role: string): string {
   return role
@@ -89,6 +132,10 @@ export function AdminShell({
   const pathname = usePathname();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
+
+  const filteredNav = navItems.filter((item) =>
+    item.roles.includes(admin.role_name)
+  );
 
   function isActive(href: string) {
     if (href === "/admin") return pathname === "/admin";
@@ -110,7 +157,7 @@ export function AdminShell({
 
       {/* Navigation */}
       <nav className="flex-1 px-3 py-4 space-y-1 overflow-y-auto">
-        {navItems.map((item) => {
+        {filteredNav.map((item) => {
           const Icon = item.icon;
           const active = isActive(item.href);
           return (
@@ -163,12 +210,7 @@ export function AdminShell({
             className="flex items-center gap-3 w-full rounded-lg px-3 py-2 text-sm hover:bg-accent transition-colors"
           >
             <div className="flex items-center justify-center w-8 h-8 rounded-full bg-[#16223B] text-white text-xs font-medium shrink-0">
-              {admin.full_name
-                .split(" ")
-                .map((n) => n[0])
-                .join("")
-                .slice(0, 2)
-                .toUpperCase()}
+              {getInitials(admin.full_name)}
             </div>
             <div className="flex-1 min-w-0 text-left">
               <p className="text-sm font-medium truncate">{admin.full_name}</p>
