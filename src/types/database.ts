@@ -38,7 +38,7 @@ export interface Course {
   language: CourseLanguage;
   status: ContentStatus;
   is_featured: boolean;
-  difficulty: string | null;
+  difficulty: Difficulty | null;
   meta: Record<string, string> | null;
   total_students: number;
   created_at: string;

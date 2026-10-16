@@ -70,7 +70,7 @@ export function CourseForm({ course, categories }: CourseFormProps) {
       discount_price: course?.discount_price ?? undefined,
       validity_days: course?.validity_days || 365,
       is_featured: course?.is_featured || false,
-      difficulty: course?.difficulty || "",
+      difficulty: course?.difficulty || null,
       status: course?.status || "draft",
       meta_title: course?.meta?.title || "",
       meta_description: course?.meta?.description || "",
@@ -156,7 +156,7 @@ export function CourseForm({ course, categories }: CourseFormProps) {
       </div>
 
       <form
-        onSubmit={handleSubmit((v) => onSubmit(v as CourseFormValues))}
+        onSubmit={handleSubmit((v) => onSubmit(v as unknown as CourseFormValues))}
         className="space-y-8"
       >
         {/* Basic Info */}
@@ -384,15 +384,15 @@ export function CourseForm({ course, categories }: CourseFormProps) {
               <Label>Difficulty</Label>
               <Select
                 value={watch("difficulty") || ""}
-                onValueChange={(val) => setValue("difficulty", val ?? "")}
+                onValueChange={(val) => setValue("difficulty", (val || null) as "easy" | "medium" | "hard" | null)}
               >
                 <SelectTrigger>
                   <SelectValue placeholder="Select level" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="beginner">Beginner</SelectItem>
-                  <SelectItem value="intermediate">Intermediate</SelectItem>
-                  <SelectItem value="advanced">Advanced</SelectItem>
+                  <SelectItem value="easy">Easy</SelectItem>
+                  <SelectItem value="medium">Medium</SelectItem>
+                  <SelectItem value="hard">Hard</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -417,7 +417,7 @@ export function CourseForm({ course, categories }: CourseFormProps) {
             variant="outline"
             disabled={isPending}
             onClick={() =>
-              handleSubmit((v) => onSubmit(v as CourseFormValues, "draft"))()
+              handleSubmit((v) => onSubmit(v as unknown as CourseFormValues, "draft"))()
             }
           >
             {isPending ? (
@@ -430,7 +430,7 @@ export function CourseForm({ course, categories }: CourseFormProps) {
             disabled={isPending}
             className="bg-[#F26A21] hover:bg-[#d95d1b] text-white"
             onClick={() =>
-              handleSubmit((v) => onSubmit(v as CourseFormValues, "published"))()
+              handleSubmit((v) => onSubmit(v as unknown as CourseFormValues, "published"))()
             }
           >
             {isPending ? (

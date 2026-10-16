@@ -30,7 +30,7 @@ export const courseSchema = z.object({
   ),
   validity_days: z.coerce.number().int().min(1, "Minimum 1 day").max(3650),
   is_featured: z.boolean().default(false),
-  difficulty: optionalString,
+  difficulty: z.enum(["easy", "medium", "hard"]).nullable().catch(null),
   status: z.enum(["draft", "published", "archived"]).default("draft"),
   meta_title: optionalString,
   meta_description: optionalString,
