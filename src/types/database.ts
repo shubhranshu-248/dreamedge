@@ -73,8 +73,12 @@ export interface ContentItem {
   video_id: string | null;
   duration_seconds: number | null;
   is_paid: boolean;
+  is_downloadable: boolean;
+  is_printable: boolean;
+  play_limit: number | null;
   status: ContentStatus;
   weight: number;
+  metadata: Record<string, unknown> | null;
 }
 
 export interface Student {

@@ -17,6 +17,7 @@ import {
   ChevronDown,
   FolderOpen,
   Tag,
+  GitBranch,
 } from "lucide-react";
 import { signOut } from "@/app/admin/login/actions";
 import type { AdminSession } from "@/lib/admin";
@@ -42,6 +43,7 @@ const navItems: NavItem[] = [
     icon: BookOpen,
     children: [
       { label: "Courses", href: "/admin/content", icon: FolderOpen },
+      { label: "Content Manager", href: "/admin/content/manager", icon: GitBranch },
       { label: "Categories", href: "/admin/content/categories", icon: Tag },
     ],
   },
