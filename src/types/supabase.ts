@@ -9,6 +9,8 @@
 // queries continue to work. After running `npm run db:types`, replace
 // this entire file with the generated output for full type safety.
 
+/* eslint-disable @typescript-eslint/no-explicit-any */
+
 export type Json =
   | string
   | number
@@ -17,5 +19,29 @@ export type Json =
   | { [key: string]: Json | undefined }
   | Json[];
 
-// eslint-disable-next-line @typescript-eslint/no-empty-interface
-export interface Database {}
+export interface Database {
+  public: {
+    Tables: {
+      [key: string]: {
+        Row: any;
+        Insert: any;
+        Update: any;
+        Relationships: any[];
+      };
+    };
+    Views: {
+      [key: string]: {
+        Row: any;
+        Relationships: any[];
+      };
+    };
+    Functions: {
+      [key: string]: {
+        Args: any;
+        Returns: any;
+      };
+    };
+    Enums: Record<string, string>;
+    CompositeTypes: Record<string, unknown>;
+  };
+}
