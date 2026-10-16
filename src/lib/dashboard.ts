@@ -64,7 +64,7 @@ export async function getDashboardKpis(role: UserRole): Promise<DashboardKpis> {
   const thisMonth = istMonthStart(0).toISOString();
   const lastMonth = istMonthStart(-1).toISOString();
 
-  const [students, newStudents, published, drafts, orders, pending] = await Promise.all([
+  const [students, newStudents, published, drafts, revenueStats, pending] = await Promise.all([
     supabase.from("students").select("id", { count: "exact", head: true }),
     supabase
       .from("students")
@@ -79,14 +79,11 @@ export async function getDashboardKpis(role: UserRole): Promise<DashboardKpis> {
       .select("id", { count: "exact", head: true })
       .eq("status", "draft"),
     canViewFinance
-      ? supabase
-          .from("orders")
-          .select("final_amount, created_at")
-          .eq("status", "completed")
-          .gte("created_at", lastMonth)
+      ? supabase.rpc("get_revenue_stats", {
+          start_date: lastMonth,
+          end_date: new Date().toISOString(),
+        })
       : null,
-    // enrollments have no pending state — an enrollment row is only created
-    // once payment clears, so "pending" means an order still awaiting payment.
     canViewFinance
       ? supabase
           .from("orders")
@@ -97,7 +94,7 @@ export async function getDashboardKpis(role: UserRole): Promise<DashboardKpis> {
 
   logError("students", students.error);
   logError("courses", published.error);
-  logError("orders", orders?.error ?? null);
+  logError("revenue", revenueStats?.error ?? null);
 
   const totalStudents = students.count ?? 0;
   const newStudentsThisMonth = newStudents.count ?? 0;
@@ -105,13 +102,18 @@ export async function getDashboardKpis(role: UserRole): Promise<DashboardKpis> {
   let revenueThisMonth: number | null = null;
   let revenueGrowth: number | null = null;
 
-  if (orders) {
+  if (revenueStats?.data) {
+    const stats = revenueStats.data as {
+      total_revenue: number;
+      total_orders: number;
+      monthly_revenue: { month: string; revenue: number; order_count: number }[];
+    };
     const cutoff = new Date(thisMonth).getTime();
     let current = 0;
     let previous = 0;
-    for (const order of orders.data ?? []) {
-      const amount = Number(order.final_amount) || 0;
-      if (new Date(order.created_at).getTime() >= cutoff) current += amount;
+    for (const m of stats.monthly_revenue ?? []) {
+      const amount = Number(m.revenue) || 0;
+      if (new Date(m.month).getTime() >= cutoff) current += amount;
       else previous += amount;
     }
     revenueThisMonth = current;
@@ -143,19 +145,22 @@ export async function getRevenueTrend(): Promise<MonthlyValue[]> {
   const supabase = await createClient();
   const months = lastSixMonths();
 
-  const { data, error } = await supabase
-    .from("orders")
-    .select("final_amount, created_at")
-    .eq("status", "completed")
-    .gte("created_at", months[0].start.toISOString());
+  const { data, error } = await supabase.rpc("get_revenue_stats", {
+    start_date: months[0].start.toISOString(),
+    end_date: new Date().toISOString(),
+  });
 
   logError("revenue trend", error);
 
+  const monthlyData = (data as {
+    monthly_revenue: { month: string; revenue: number }[];
+  } | null)?.monthly_revenue ?? [];
+
   const totals = new Map(months.map((m) => [m.key, 0]));
-  for (const order of data ?? []) {
-    const key = istMonthKey(order.created_at);
+  for (const row of monthlyData) {
+    const key = istMonthKey(row.month);
     if (totals.has(key)) {
-      totals.set(key, totals.get(key)! + (Number(order.final_amount) || 0));
+      totals.set(key, Number(row.revenue) || 0);
     }
   }
 
@@ -171,8 +176,8 @@ export async function getEnrollmentTrend(): Promise<MonthlyValue[]> {
       supabase
         .from("enrollments")
         .select("id", { count: "exact", head: true })
-        .gte("created_at", m.start.toISOString())
-        .lt("created_at", m.end.toISOString())
+        .gte("purchased_at", m.start.toISOString())
+        .lt("purchased_at", m.end.toISOString())
     )
   );
 
@@ -220,55 +225,38 @@ export interface CoursePerformance {
 
 export async function getTopCourses(role: UserRole, limit = 5): Promise<CoursePerformance[]> {
   const supabase = await createClient();
-
-  const { data: courses, error } = await supabase
-    .from("courses")
-    .select("id, name, status, enrollments(count)");
-
-  logError("courses", error);
-  if (!courses?.length) return [];
-
-  const top = courses
-    .map((course) => ({
-      id: course.id as string,
-      name: course.name as string,
-      status: course.status as string,
-      enrollments: (course.enrollments as { count: number }[])[0]?.count ?? 0,
-    }))
-    .sort((a, b) => b.enrollments - a.enrollments || a.name.localeCompare(b.name))
-    .slice(0, limit);
-
-  const ids = top.map((c) => c.id);
   const canViewFinance = FINANCE_ROLES.includes(role);
 
-  const [orders, completion] = await Promise.all([
-    canViewFinance
-      ? supabase
-          .from("orders")
-          .select("course_id, final_amount")
-          .eq("status", "completed")
-          .in("course_id", ids)
-      : null,
-    Promise.all(top.map((course) => getCompletionCounts(supabase, course.id))),
-  ]);
+  const { data, error } = await supabase.rpc("get_top_courses", { course_limit: limit });
+  logError("top courses", error);
 
-  logError("course revenue", orders?.error ?? null);
+  const rows = (data ?? []) as {
+    id: string;
+    name: string;
+    slug: string;
+    thumbnail_url: string | null;
+    status: string;
+    price: number;
+    enrollment_count: number;
+    total_revenue: number;
+  }[];
 
-  const revenueByCourse = new Map<string, number>();
-  for (const order of orders?.data ?? []) {
-    revenueByCourse.set(
-      order.course_id,
-      (revenueByCourse.get(order.course_id) ?? 0) + (Number(order.final_amount) || 0)
-    );
-  }
+  if (!rows.length) return [];
 
-  return top.map((course, i) => {
-    const { items, completed } = completion[i];
-    const possible = items * course.enrollments;
+  const completions = await Promise.all(
+    rows.map((course) => getCompletionCounts(supabase, course.id))
+  );
+
+  return rows.map((course, i) => {
+    const { items, completed } = completions[i];
+    const possible = items * course.enrollment_count;
 
     return {
-      ...course,
-      revenue: canViewFinance ? (revenueByCourse.get(course.id) ?? 0) : null,
+      id: course.id,
+      name: course.name,
+      status: course.status,
+      enrollments: course.enrollment_count,
+      revenue: canViewFinance ? course.total_revenue : null,
       completionRate: possible > 0 ? Math.min(100, (completed / possible) * 100) : null,
     };
   });

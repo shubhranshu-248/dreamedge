@@ -21,6 +21,7 @@ export type QuestionType =
   | "subjective"
   | "image_based";
 export type OrderStatus = "pending" | "completed" | "failed" | "refunded";
+export type CourseLanguage = "hindi" | "english" | "hinglish";
 export type EnrollmentStatus = "active" | "expired" | "cancelled";
 
 export interface Course {
@@ -34,7 +35,7 @@ export interface Course {
   price: number;
   discount_price: number | null;
   validity_days: number;
-  language: string;
+  language: CourseLanguage;
   status: ContentStatus;
   is_featured: boolean;
   difficulty: string | null;
@@ -121,7 +122,6 @@ export interface AdminUser {
   last_login_at: string | null;
 }
 
-export type TestStatus = "draft" | "published" | "archived";
 export type Difficulty = "easy" | "medium" | "hard";
 
 export interface Test {
@@ -136,7 +136,7 @@ export interface Test {
   show_results: boolean;
   certificate_enabled: boolean;
   negative_marking: boolean;
-  status: TestStatus;
+  status: ContentStatus;
   created_at: string;
   updated_at: string;
 }
@@ -254,6 +254,9 @@ export interface AuditLogEntry {
   action: string;
   entity_type: string;
   entity_id: string | null;
+  old_data: Record<string, unknown> | null;
+  new_data: Record<string, unknown> | null;
   metadata: Record<string, unknown> | null;
+  ip_address: string | null;
   created_at: string;
 }

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback, useTransition } from "react";
+import { useState, useEffect, useCallback, useRef, useTransition } from "react";
 import {
   DndContext,
   closestCenter,
@@ -146,7 +146,6 @@ export function TestBuilder({ courses, initialTest }: TestBuilderProps) {
     moveQuestion,
     setEditingQuestion,
     markSaving,
-    markSaved,
     reset,
   } = useTestBuilder();
 
@@ -170,18 +169,22 @@ export function TestBuilder({ courses, initialTest }: TestBuilderProps) {
     return () => reset();
   }, []);
 
+  const currentStatusRef = useRef<"draft" | "published">("draft");
+
   const handleSave = useCallback(
-    (publish = false) => {
+    (preserveStatus = false) => {
       startTransition(async () => {
         markSaving(true);
+        const gen = useTestBuilder.getState().saveGeneration;
+        const status = preserveStatus ? currentStatusRef.current : ("draft" as const);
         const payload = {
           id: testId || undefined,
           ...settings,
-          status: publish ? ("published" as const) : ("draft" as const),
+          status,
           questions: questions.map((q, i) => ({ ...q, weight: i + 1 })),
         };
 
-        const action = publish ? publishTest : saveTest;
+        const action = status === "published" ? publishTest : saveTest;
         const result = await action(payload);
 
         if (result.error) {
@@ -199,19 +202,70 @@ export function TestBuilder({ courses, initialTest }: TestBuilderProps) {
           );
         }
 
-        markSaved();
-        toast.success(publish ? "Test published" : "Test saved");
+        useTestBuilder.getState().markSaved(gen);
+        toast.success(
+          preserveStatus ? "Test saved" : "Test saved as draft"
+        );
       });
     },
-    [testId, settings, questions, markSaving, markSaved, setTestId]
+    [testId, settings, questions, markSaving, setTestId]
   );
 
-  // auto-save every 30s
+  const handlePublish = useCallback(() => {
+    currentStatusRef.current = "published";
+    startTransition(async () => {
+      markSaving(true);
+      const gen = useTestBuilder.getState().saveGeneration;
+      const payload = {
+        id: testId || undefined,
+        ...settings,
+        status: "published" as const,
+        questions: questions.map((q, i) => ({ ...q, weight: i + 1 })),
+      };
+
+      const result = await publishTest(payload);
+
+      if (result.error) {
+        toast.error(result.error);
+        markSaving(false);
+        return;
+      }
+
+      if (result.data?.id && !testId) {
+        setTestId(result.data.id);
+        window.history.replaceState(
+          null,
+          "",
+          `/admin/content/tests/${result.data.id}/edit`
+        );
+      }
+
+      useTestBuilder.getState().markSaved(gen);
+      toast.success("Test published");
+    });
+  }, [testId, settings, questions, markSaving, setTestId]);
+
+  // auto-save every 30s — preserves current status
+  const saveRef = useRef(handleSave);
+  useEffect(() => { saveRef.current = handleSave; }, [handleSave]);
+
   useEffect(() => {
     if (!dirty || saving) return;
-    const timer = setTimeout(() => handleSave(false), 30000);
+    const timer = setTimeout(() => saveRef.current(true), 30000);
     return () => clearTimeout(timer);
-  }, [dirty, saving, handleSave]);
+  }, [dirty, saving]);
+
+  // warn before navigating away with unsaved changes
+  useEffect(() => {
+    const handler = (e: BeforeUnloadEvent) => {
+      if (dirty) {
+        e.preventDefault();
+        e.returnValue = "";
+      }
+    };
+    window.addEventListener("beforeunload", handler);
+    return () => window.removeEventListener("beforeunload", handler);
+  }, [dirty]);
 
   function handleDragEnd(event: DragEndEvent) {
     const { active, over } = event;
@@ -300,7 +354,7 @@ export function TestBuilder({ courses, initialTest }: TestBuilderProps) {
           <Button
             size="sm"
             className="bg-[#F26A21] hover:bg-[#d95d1b] text-white"
-            onClick={() => handleSave(true)}
+            onClick={handlePublish}
             disabled={isPending}
           >
             <Upload className="mr-1.5 h-4 w-4" />

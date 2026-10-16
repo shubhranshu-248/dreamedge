@@ -37,6 +37,8 @@ interface TestBuilderState {
   saving: boolean;
   lastSaved: Date | null;
   editingQuestionId: string | null;
+  saveGeneration: number;
+  lastSavedGeneration: number;
 
   setTestId: (id: string | null) => void;
   setSettings: (s: Partial<TestSettings>) => void;
@@ -49,7 +51,7 @@ interface TestBuilderState {
   setEditingQuestion: (id: string | null) => void;
   markDirty: () => void;
   markSaving: (saving: boolean) => void;
-  markSaved: () => void;
+  markSaved: (generation: number) => void;
   reset: () => void;
 }
 
@@ -78,6 +80,8 @@ export const useTestBuilder = create<TestBuilderState>((set, get) => ({
   saving: false,
   lastSaved: null,
   editingQuestionId: null,
+  saveGeneration: 0,
+  lastSavedGeneration: 0,
 
   setTestId: (id) => set({ testId: id }),
 
@@ -85,6 +89,7 @@ export const useTestBuilder = create<TestBuilderState>((set, get) => ({
     set((state) => ({
       settings: { ...state.settings, ...s },
       dirty: true,
+      saveGeneration: state.saveGeneration + 1,
     })),
 
   setQuestions: (q) => set({ questions: q }),
@@ -93,6 +98,7 @@ export const useTestBuilder = create<TestBuilderState>((set, get) => ({
     set((state) => ({
       questions: [...state.questions, { ...q, weight: state.questions.length + 1 }],
       dirty: true,
+      saveGeneration: state.saveGeneration + 1,
     })),
 
   updateQuestion: (id, updates) =>
@@ -101,6 +107,7 @@ export const useTestBuilder = create<TestBuilderState>((set, get) => ({
         q.id === id ? { ...q, ...updates } : q
       ),
       dirty: true,
+      saveGeneration: state.saveGeneration + 1,
     })),
 
   removeQuestion: (id) =>
@@ -109,6 +116,7 @@ export const useTestBuilder = create<TestBuilderState>((set, get) => ({
         .filter((q) => q.id !== id)
         .map((q, i) => ({ ...q, weight: i + 1 })),
       dirty: true,
+      saveGeneration: state.saveGeneration + 1,
       editingQuestionId:
         state.editingQuestionId === id ? null : state.editingQuestionId,
     })),
@@ -121,6 +129,9 @@ export const useTestBuilder = create<TestBuilderState>((set, get) => ({
     const clone: QuestionDraft = {
       ...source,
       id: generateId(),
+      options: source.options
+        ? JSON.parse(JSON.stringify(source.options))
+        : null,
       weight: idx + 2,
     };
     const updated = [...state.questions];
@@ -128,25 +139,43 @@ export const useTestBuilder = create<TestBuilderState>((set, get) => ({
     set({
       questions: updated.map((q, i) => ({ ...q, weight: i + 1 })),
       dirty: true,
+      saveGeneration: state.saveGeneration + 1,
     });
   },
 
   moveQuestion: (fromIndex, toIndex) =>
     set((state) => {
+      if (
+        fromIndex < 0 || fromIndex >= state.questions.length ||
+        toIndex < 0 || toIndex >= state.questions.length
+      ) {
+        return state;
+      }
       const updated = [...state.questions];
       const [moved] = updated.splice(fromIndex, 1);
       updated.splice(toIndex, 0, moved);
       return {
         questions: updated.map((q, i) => ({ ...q, weight: i + 1 })),
         dirty: true,
+        saveGeneration: state.saveGeneration + 1,
       };
     }),
 
   setEditingQuestion: (id) => set({ editingQuestionId: id }),
 
-  markDirty: () => set({ dirty: true }),
+  markDirty: () =>
+    set((state) => ({ dirty: true, saveGeneration: state.saveGeneration + 1 })),
+
   markSaving: (saving) => set({ saving }),
-  markSaved: () => set({ dirty: false, saving: false, lastSaved: new Date() }),
+
+  markSaved: (generation: number) =>
+    set((state) => ({
+      dirty: state.saveGeneration !== generation,
+      saving: false,
+      lastSaved: new Date(),
+      lastSavedGeneration: generation,
+    })),
+
   reset: () =>
     set({
       testId: null,
@@ -156,5 +185,7 @@ export const useTestBuilder = create<TestBuilderState>((set, get) => ({
       saving: false,
       lastSaved: null,
       editingQuestionId: null,
+      saveGeneration: 0,
+      lastSavedGeneration: 0,
     }),
 }));

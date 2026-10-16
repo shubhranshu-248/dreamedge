@@ -22,7 +22,7 @@ const PAGE_SIZE = 10;
 
 async function getCourses(params: SearchParams) {
   const supabase = await createClient();
-  const page = Math.max(1, parseInt(params.page || "1"));
+  const page = Math.max(1, parseInt(params.page as string, 10) || 1);
   const offset = (page - 1) * PAGE_SIZE;
 
   let query = supabase
@@ -81,7 +81,7 @@ async function CourseGrid({ searchParams }: { searchParams: SearchParams }) {
     getCategories(),
   ]);
 
-  const page = Math.max(1, parseInt(searchParams.page || "1"));
+  const page = Math.max(1, parseInt(searchParams.page as string, 10) || 1);
   const totalPages = Math.ceil(total / PAGE_SIZE);
 
   if (courses.length === 0 && page === 1) {

@@ -38,39 +38,41 @@ export async function createCourse(formData: FormData) {
     const values = parsed.data;
     let slug = values.slug || toSlug(values.name);
 
-    const { count } = await supabase
-      .from("courses")
-      .select("id", { count: "exact", head: true })
-      .eq("slug", slug);
-
-    if (count && count > 0) {
-      slug = `${slug}-${Date.now().toString(36)}`;
-    }
-
     const meta: Record<string, string> = {};
     if (values.meta_title) meta.title = values.meta_title;
     if (values.meta_description) meta.description = values.meta_description;
     if (values.preview_video_url) meta.preview_video_url = values.preview_video_url;
 
-    const { data, error } = await supabase
+    const row = {
+      name: values.name,
+      slug,
+      description: values.description || null,
+      short_description: values.short_description || null,
+      category_id: values.category_id || null,
+      language: values.language,
+      price: values.price,
+      discount_price: values.discount_price != null ? values.discount_price : null,
+      validity_days: values.validity_days,
+      is_featured: values.is_featured,
+      difficulty: values.difficulty || null,
+      status: values.status,
+      meta: Object.keys(meta).length > 0 ? meta : null,
+    };
+
+    let { data, error } = await supabase
       .from("courses")
-      .insert({
-        name: values.name,
-        slug,
-        description: values.description || null,
-        short_description: values.short_description || null,
-        category_id: values.category_id || null,
-        language: values.language,
-        price: values.price,
-        discount_price: values.discount_price ? Number(values.discount_price) : null,
-        validity_days: values.validity_days,
-        is_featured: values.is_featured,
-        difficulty: values.difficulty || null,
-        status: values.status,
-        meta: Object.keys(meta).length > 0 ? meta : null,
-      })
+      .insert(row)
       .select("id")
       .single();
+
+    if (error?.code === "23505") {
+      slug = `${slug}-${Date.now().toString(36)}`;
+      ({ data, error } = await supabase
+        .from("courses")
+        .insert({ ...row, slug })
+        .select("id")
+        .single());
+    }
 
     if (error) {
       console.error("createCourse failed:", error);
@@ -78,7 +80,7 @@ export async function createCourse(formData: FormData) {
     }
 
     revalidatePath("/admin/content");
-    return { success: true, id: data.id };
+    return { success: true, id: data!.id };
   } catch (err) {
     console.error("createCourse failed:", err);
     return { error: "You don't have permission to perform this action." };
@@ -108,16 +110,6 @@ export async function updateCourse(id: string, formData: FormData) {
 
     const values = parsed.data;
 
-    const { count } = await supabase
-      .from("courses")
-      .select("id", { count: "exact", head: true })
-      .eq("slug", values.slug)
-      .neq("id", id);
-
-    if (count && count > 0) {
-      return { error: "This slug is already taken by another course" };
-    }
-
     const meta: Record<string, string> = {};
     if (values.meta_title) meta.title = values.meta_title;
     if (values.meta_description) meta.description = values.meta_description;
@@ -133,7 +125,7 @@ export async function updateCourse(id: string, formData: FormData) {
         category_id: values.category_id || null,
         language: values.language,
         price: values.price,
-        discount_price: values.discount_price ? Number(values.discount_price) : null,
+        discount_price: values.discount_price != null ? values.discount_price : null,
         validity_days: values.validity_days,
         is_featured: values.is_featured,
         difficulty: values.difficulty || null,
@@ -144,6 +136,9 @@ export async function updateCourse(id: string, formData: FormData) {
       .eq("id", id);
 
     if (error) {
+      if (error.code === "23505") {
+        return { error: "This slug is already taken by another course" };
+      }
       console.error("updateCourse failed:", error);
       return { error: "Something went wrong. Please try again." };
     }
