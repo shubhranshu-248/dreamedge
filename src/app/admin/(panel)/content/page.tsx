@@ -99,7 +99,7 @@ async function CourseGrid({ searchParams }: { searchParams: SearchParams }) {
         }
         action={
           !hasFilters ? (
-            <Button render={<Link href="/admin/content/courses/new" />} className="bg-[#F26A21] hover:bg-[#d95d1b] text-white">
+            <Button render={<Link href="/admin/content/courses/new" />} className="bg-brand-orange hover:bg-brand-orange-dark text-white">
               <Plus className="mr-1.5 h-4 w-4" />
               Create Course
             </Button>
@@ -214,7 +214,7 @@ export default async function ContentPage({
             Manage your course catalog
           </p>
         </div>
-        <Button render={<Link href="/admin/content/courses/new" />} className="bg-[#F26A21] hover:bg-[#d95d1b] text-white">
+        <Button render={<Link href="/admin/content/courses/new" />} className="bg-brand-orange hover:bg-brand-orange-dark text-white">
           <Plus className="mr-1.5 h-4 w-4" />
           Add Course
         </Button>

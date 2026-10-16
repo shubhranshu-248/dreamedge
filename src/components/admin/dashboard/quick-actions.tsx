@@ -55,9 +55,9 @@ export function QuickActions({ role }: { role: UserRole }) {
             <Link
               key={action.href}
               href={action.href}
-              className="group flex items-center gap-3 rounded-lg border px-3 py-2.5 transition-colors hover:border-[#F26A21]/40 hover:bg-[#F26A21]/5 focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:outline-none"
+              className="group flex items-center gap-3 rounded-lg border px-3 py-2.5 transition-colors hover:border-brand-orange/40 hover:bg-brand-orange/5 focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:outline-none"
             >
-              <div className="flex size-8 shrink-0 items-center justify-center rounded-md bg-[#16223B] text-white dark:bg-[#F26A21]/15 dark:text-[#F26A21]">
+              <div className="flex size-8 shrink-0 items-center justify-center rounded-md bg-brand-blue text-white dark:bg-brand-orange/15 dark:text-brand-orange">
                 <Icon className="size-4" />
               </div>
               <div className="min-w-0 flex-1">

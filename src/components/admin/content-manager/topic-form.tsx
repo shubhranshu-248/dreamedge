@@ -74,7 +74,7 @@ export function TopicForm({ topic }: { topic: Topic }) {
       <Button
         type="submit"
         disabled={isPending}
-        className="bg-[#F26A21] hover:bg-[#d95d1b] text-white"
+        className="bg-brand-orange hover:bg-brand-orange-dark text-white"
       >
         {isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
         Save Changes

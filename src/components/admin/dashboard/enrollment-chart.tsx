@@ -28,7 +28,7 @@ export function EnrollmentChart({ data }: { data: MonthlyValue[] }) {
           />
         ) : (
           // Brand dark blue disappears on a dark background, so lift it in dark mode.
-          <div className="h-64 [--bar:#16223B] dark:[--bar:#6B85BC]">
+          <div className="h-64 [--bar:var(--color-brand-blue)] dark:[--bar:#6B85BC]">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={data} margin={{ top: 8, right: 8, bottom: 0, left: -16 }}>
                 <CartesianGrid vertical={false} stroke="var(--border)" />

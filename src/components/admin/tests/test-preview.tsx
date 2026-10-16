@@ -175,7 +175,7 @@ export function TestPreview({
                 onClick={() => setCurrent(i)}
                 className={`flex h-8 w-8 items-center justify-center rounded-md text-xs font-medium transition-colors ${
                   i === current
-                    ? "bg-[#F26A21] text-white"
+                    ? "bg-brand-orange text-white"
                     : "bg-muted text-muted-foreground hover:text-foreground"
                 }`}
               >
@@ -232,7 +232,7 @@ export function TestPreview({
           ) : (
             <Button
               size="sm"
-              className="bg-[#F26A21] hover:bg-[#d95d1b] text-white"
+              className="bg-brand-orange hover:bg-brand-orange-dark text-white"
               onClick={onClose}
             >
               <Flag className="mr-1 h-4 w-4" />

@@ -21,7 +21,7 @@ function CompletionBar({ value }: { value: number | null }) {
   return (
     <div className="flex items-center justify-end gap-2">
       <div className="hidden h-1.5 w-16 overflow-hidden rounded-full bg-muted sm:block">
-        <div className="h-full rounded-full bg-[#F26A21]" style={{ width: `${value}%` }} />
+        <div className="h-full rounded-full bg-brand-orange" style={{ width: `${value}%` }} />
       </div>
       <span className="w-10 text-right tabular-nums">{Math.round(value)}%</span>
     </div>
@@ -44,7 +44,7 @@ export function CoursePerformance({ courses }: { courses: CoursePerformanceRow[]
             action={
               <Link
                 href="/admin/content"
-                className="inline-flex h-8 items-center rounded-lg bg-[#F26A21] px-3 text-sm font-medium text-white transition-colors hover:bg-[#F26A21]/90"
+                className="inline-flex h-8 items-center rounded-lg bg-brand-orange px-3 text-sm font-medium text-white transition-colors hover:bg-brand-orange/90"
               >
                 Create a course
               </Link>
@@ -70,7 +70,7 @@ export function CoursePerformance({ courses }: { courses: CoursePerformanceRow[]
                     <div className="flex items-center gap-2">
                       <Link
                         href={`/admin/content/courses/${course.id}`}
-                        className="truncate font-medium hover:text-[#F26A21] hover:underline"
+                        className="truncate font-medium hover:text-brand-orange hover:underline"
                       >
                         {course.name}
                       </Link>

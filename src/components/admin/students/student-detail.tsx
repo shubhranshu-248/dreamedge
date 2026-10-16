@@ -139,7 +139,7 @@ export function StudentDetail({ studentId, onClose, onStatusChange }: StudentDet
           <>
             <SheetHeader className="border-b border-border pb-4">
               <div className="flex items-start gap-4">
-                <div className="flex items-center justify-center w-12 h-12 rounded-full bg-[#16223B] text-white text-sm font-semibold shrink-0">
+                <div className="flex items-center justify-center w-12 h-12 rounded-full bg-brand-blue text-white text-sm font-semibold shrink-0">
                   {getInitials(student.full_name as string)}
                 </div>
                 <div className="flex-1 min-w-0">
@@ -343,7 +343,7 @@ export function StudentDetail({ studentId, onClose, onStatusChange }: StudentDet
                               href={o.invoice_url as string}
                               target="_blank"
                               rel="noopener noreferrer"
-                              className="text-xs text-[#F26A21] hover:underline"
+                              className="text-xs text-brand-orange hover:underline"
                             >
                               View Invoice
                             </a>

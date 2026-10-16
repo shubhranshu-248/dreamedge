@@ -159,7 +159,7 @@ export function QuestionBankClient({ questions }: QuestionBankClientProps) {
         </div>
         <Button
           onClick={openCreate}
-          className="bg-[#F26A21] hover:bg-[#d95d1b] text-white"
+          className="bg-brand-orange hover:bg-brand-orange-dark text-white"
         >
           <Plus className="mr-2 h-4 w-4" />
           Add Question
@@ -405,7 +405,7 @@ export function QuestionBankClient({ questions }: QuestionBankClientProps) {
             <Button
               onClick={handleSave}
               disabled={isPending || !editModal?.content}
-              className="bg-[#F26A21] hover:bg-[#d95d1b] text-white"
+              className="bg-brand-orange hover:bg-brand-orange-dark text-white"
             >
               {isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               {editModal?.id ? "Update" : "Add"}

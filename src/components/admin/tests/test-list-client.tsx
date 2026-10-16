@@ -103,7 +103,7 @@ export function TestListClient({ tests, courses }: TestListClientProps) {
         </div>
         <Button
           render={<Link href="/admin/content/tests/new" />}
-          className="bg-[#F26A21] hover:bg-[#d95d1b] text-white"
+          className="bg-brand-orange hover:bg-brand-orange-dark text-white"
         >
           <Plus className="mr-2 h-4 w-4" />
           Create Test
@@ -170,7 +170,7 @@ export function TestListClient({ tests, courses }: TestListClientProps) {
                   <TableCell className="font-medium">
                     <Link
                       href={`/admin/content/tests/${test.id}/edit`}
-                      className="hover:text-[#F26A21] transition-colors"
+                      className="hover:text-brand-orange transition-colors"
                     >
                       {test.name}
                     </Link>

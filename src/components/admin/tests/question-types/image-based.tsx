@@ -161,7 +161,7 @@ export function ImageBased({
               onClick={() => onSubTypeChange(st)}
               className={`rounded-md px-2.5 py-1 text-xs font-medium transition-colors ${
                 subType === st
-                  ? "bg-[#F26A21] text-white"
+                  ? "bg-brand-orange text-white"
                   : "bg-muted text-muted-foreground hover:text-foreground"
               }`}
             >

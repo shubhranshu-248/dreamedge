@@ -205,7 +205,7 @@ export function LeadTable({ initialData }: LeadTableProps) {
           </Select>
 
           <Button
-            className="bg-[#F26A21] hover:bg-[#d95d1b] text-white"
+            className="bg-brand-orange hover:bg-brand-orange-dark text-white"
             onClick={() => setShowForm(true)}
           >
             <Plus className="h-4 w-4 mr-1.5" />

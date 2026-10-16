@@ -159,7 +159,7 @@ export function CategoryTable({
         <Button
           size="sm"
           onClick={openCreate}
-          className="bg-[#F26A21] hover:bg-[#d95d1b] text-white"
+          className="bg-brand-orange hover:bg-brand-orange-dark text-white"
         >
           <Plus className="mr-1.5 h-4 w-4" />
           Add Category
@@ -274,7 +274,7 @@ export function CategoryTable({
             <Button
               onClick={handleSave}
               disabled={isPending || !name.trim()}
-              className="bg-[#F26A21] hover:bg-[#d95d1b] text-white"
+              className="bg-brand-orange hover:bg-brand-orange-dark text-white"
             >
               {isPending ? (
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />

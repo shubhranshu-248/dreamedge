@@ -365,7 +365,7 @@ export function TestBuilder({ courses, initialTest }: TestBuilderProps) {
           </Button>
           <Button
             size="sm"
-            className="bg-[#F26A21] hover:bg-[#d95d1b] text-white"
+            className="bg-brand-orange hover:bg-brand-orange-dark text-white"
             onClick={handlePublish}
             disabled={isPending}
           >
@@ -454,9 +454,9 @@ export function TestBuilder({ courses, initialTest }: TestBuilderProps) {
                         key={qt.type}
                         type="button"
                         onClick={() => handleAddQuestion(qt.type)}
-                        className="flex flex-col items-center gap-1.5 rounded-lg border border-border p-3 text-center transition-colors hover:border-[#F26A21]/40 hover:bg-[#F26A21]/5"
+                        className="flex flex-col items-center gap-1.5 rounded-lg border border-border p-3 text-center transition-colors hover:border-brand-orange/40 hover:bg-brand-orange/5"
                       >
-                        <Icon className="h-5 w-5 text-[#F26A21]" />
+                        <Icon className="h-5 w-5 text-brand-orange" />
                         <span className="text-xs font-medium">{qt.label}</span>
                         <span className="text-[10px] text-muted-foreground">
                           {qt.desc}

@@ -88,7 +88,7 @@ export function SubjectForm({ subject }: { subject: Subject }) {
                 className="sr-only peer"
               />
               <div
-                className="h-8 w-8 rounded-full ring-2 ring-transparent peer-checked:ring-[#F26A21] peer-checked:ring-offset-2 ring-offset-background transition-all"
+                className="h-8 w-8 rounded-full ring-2 ring-transparent peer-checked:ring-brand-orange peer-checked:ring-offset-2 ring-offset-background transition-all"
                 style={{ backgroundColor: color }}
               />
             </label>
@@ -110,7 +110,7 @@ export function SubjectForm({ subject }: { subject: Subject }) {
       <Button
         type="submit"
         disabled={isPending}
-        className="bg-[#F26A21] hover:bg-[#d95d1b] text-white"
+        className="bg-brand-orange hover:bg-brand-orange-dark text-white"
       >
         {isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
         Save Changes

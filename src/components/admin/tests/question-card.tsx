@@ -197,7 +197,7 @@ export function QuestionCard({
       style={style}
       className={`rounded-xl border bg-card transition-shadow ${
         isEditing
-          ? "border-[#F26A21]/40 shadow-md ring-1 ring-[#F26A21]/20"
+          ? "border-brand-orange/40 shadow-md ring-1 ring-brand-orange/20"
           : "border-border hover:shadow-sm"
       }`}
     >

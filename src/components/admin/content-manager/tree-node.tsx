@@ -103,7 +103,7 @@ export const TreeNodeRow = memo(function TreeNodeRow({
       className={cn(
         "group flex items-center gap-1 rounded-md px-1.5 py-1 text-sm transition-colors cursor-pointer select-none",
         isSelected
-          ? "bg-[#F26A21]/10 text-[#F26A21]"
+          ? "bg-brand-orange/10 text-brand-orange"
           : "text-foreground hover:bg-muted",
         isDragging && "opacity-50",
         isDraft && !isSelected && "text-muted-foreground"

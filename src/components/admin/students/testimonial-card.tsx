@@ -36,7 +36,7 @@ export function TestimonialCard({
         <div className="flex-1 min-w-0">
           {/* Header */}
           <div className="flex items-center gap-2 mb-2">
-            <div className="flex items-center justify-center w-8 h-8 rounded-full bg-[#16223B] text-white text-xs font-medium shrink-0">
+            <div className="flex items-center justify-center w-8 h-8 rounded-full bg-brand-blue text-white text-xs font-medium shrink-0">
               {testimonial.student_name
                 .split(" ")
                 .map((n) => n[0])
@@ -76,12 +76,12 @@ export function TestimonialCard({
           <div className="flex items-start gap-2 mb-3">
             {testimonial.type === "video" ? (
               <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                <Video className="h-4 w-4 text-[#F26A21]" />
+                <Video className="h-4 w-4 text-brand-orange" />
                 <a
                   href={testimonial.video_url ?? "#"}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="text-[#F26A21] hover:underline text-xs"
+                  className="text-brand-orange hover:underline text-xs"
                 >
                   Video testimonial
                 </a>

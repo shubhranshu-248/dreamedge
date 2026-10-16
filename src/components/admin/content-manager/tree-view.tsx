@@ -427,7 +427,7 @@ export function TreeView({ courses }: TreeViewProps) {
             </p>
             <Button
               size="sm"
-              className="mt-1 h-7 text-xs bg-[#F26A21] hover:bg-[#d95d1b] text-white"
+              className="mt-1 h-7 text-xs bg-brand-orange hover:bg-brand-orange-dark text-white"
               onClick={() => openAddDialog(null, "subject")}
             >
               <Plus className="mr-1 h-3 w-3" />
@@ -538,7 +538,7 @@ export function TreeView({ courses }: TreeViewProps) {
             <Button
               onClick={handleAdd}
               disabled={isPending || !addName.trim()}
-              className="bg-[#F26A21] hover:bg-[#d95d1b] text-white"
+              className="bg-brand-orange hover:bg-brand-orange-dark text-white"
             >
               {isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               Create

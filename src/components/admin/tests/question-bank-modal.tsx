@@ -142,14 +142,14 @@ export function QuestionBankModal({
                   onClick={() => toggleSelect(q.id)}
                   className={`flex w-full items-start gap-3 px-3 py-2.5 text-left transition-colors ${
                     selected.has(q.id)
-                      ? "bg-[#F26A21]/5"
+                      ? "bg-brand-orange/5"
                       : "hover:bg-muted/50"
                   }`}
                 >
                   <div
                     className={`mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded border ${
                       selected.has(q.id)
-                        ? "border-[#F26A21] bg-[#F26A21] text-white"
+                        ? "border-brand-orange bg-brand-orange text-white"
                         : "border-border"
                     }`}
                   >
@@ -177,7 +177,7 @@ export function QuestionBankModal({
           <Button
             onClick={handleImport}
             disabled={selected.size === 0}
-            className="bg-[#F26A21] hover:bg-[#d95d1b] text-white"
+            className="bg-brand-orange hover:bg-brand-orange-dark text-white"
           >
             Import {selected.size > 0 ? `(${selected.size})` : ""}
           </Button>

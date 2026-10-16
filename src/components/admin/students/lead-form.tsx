@@ -103,7 +103,7 @@ export function LeadFormDialog({
               </Button>
               <Button
                 type="submit"
-                className="bg-[#F26A21] hover:bg-[#d95d1b] text-white"
+                className="bg-brand-orange hover:bg-brand-orange-dark text-white"
                 disabled={isPending}
               >
                 {isPending && <Loader2 className="h-4 w-4 mr-1.5 animate-spin" />}

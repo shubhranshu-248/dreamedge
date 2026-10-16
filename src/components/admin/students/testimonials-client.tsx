@@ -136,7 +136,7 @@ export function TestimonialsClient({ initialData }: { initialData: Testimonial[]
     <div className="space-y-6">
       <div className="flex justify-end">
         <Button
-          className="bg-[#F26A21] hover:bg-[#d95d1b] text-white"
+          className="bg-brand-orange hover:bg-brand-orange-dark text-white"
           onClick={() => {
             setEditData(null);
             setShowForm(true);
@@ -166,7 +166,7 @@ export function TestimonialsClient({ initialData }: { initialData: Testimonial[]
               <p className="text-sm text-muted-foreground">No testimonials yet</p>
               <Button
                 variant="link"
-                className="text-[#F26A21]"
+                className="text-brand-orange"
                 onClick={() => {
                   setEditData(null);
                   setShowForm(true);

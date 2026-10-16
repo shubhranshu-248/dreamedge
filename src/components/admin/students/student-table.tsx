@@ -235,6 +235,7 @@ export function StudentTable({ initialData, initialCount, courses }: StudentTabl
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input
             placeholder="Search by name, email, or phone..."
+            aria-label="Search students"
             value={search}
             onChange={(e) => handleSearch(e.target.value)}
             className="pl-9"
@@ -249,7 +250,7 @@ export function StudentTable({ initialData, initialCount, courses }: StudentTabl
             <Filter className="h-4 w-4 mr-1.5" />
             Filters
           </Button>
-          <Button variant="outline" size="sm" onClick={handleExportCsv}>
+          <Button variant="outline" size="sm" onClick={handleExportCsv} aria-label="Export students as CSV">
             <Download className="h-4 w-4 mr-1.5" />
             Export CSV
           </Button>
@@ -258,7 +259,7 @@ export function StudentTable({ initialData, initialCount, courses }: StudentTabl
 
       {/* Bulk Actions */}
       {selectedRows.size > 0 && (
-        <div className="flex items-center gap-3 rounded-lg bg-[#F26A21]/5 border border-[#F26A21]/20 px-4 py-2">
+        <div className="flex items-center gap-3 rounded-lg bg-brand-orange/5 border border-brand-orange/20 px-4 py-2">
           <span className="text-sm font-medium">
             {selectedRows.size} selected
           </span>
@@ -333,7 +334,8 @@ export function StudentTable({ initialData, initialCount, courses }: StudentTabl
       )}
 
       {/* Table */}
-      <div className="rounded-lg border border-border overflow-hidden">
+      <div className="overflow-x-auto -mx-4 px-4 sm:mx-0 sm:px-0">
+       <div className="rounded-lg border border-border overflow-hidden">
         <Table>
           <TableHeader>
             <TableRow>
@@ -383,7 +385,7 @@ export function StudentTable({ initialData, initialCount, courses }: StudentTabl
                   </TableCell>
                   <TableCell>
                     <div className="flex items-center gap-3">
-                      <div className="flex items-center justify-center w-8 h-8 rounded-full bg-[#16223B] text-white text-xs font-medium shrink-0">
+                      <div className="flex items-center justify-center w-8 h-8 rounded-full bg-brand-blue text-white text-xs font-medium shrink-0">
                         {student.full_name
                           .split(" ")
                           .map((n) => n[0])
@@ -424,6 +426,7 @@ export function StudentTable({ initialData, initialCount, courses }: StudentTabl
             )}
           </TableBody>
         </Table>
+       </div>
       </div>
 
       {/* Pagination */}
@@ -439,6 +442,7 @@ export function StudentTable({ initialData, initialCount, courses }: StudentTabl
               size="sm"
               disabled={page <= 1}
               onClick={() => handlePageChange(page - 1)}
+              aria-label="Previous page"
             >
               <ChevronLeft className="h-4 w-4" />
             </Button>
@@ -450,6 +454,7 @@ export function StudentTable({ initialData, initialCount, courses }: StudentTabl
               size="sm"
               disabled={page >= totalPages}
               onClick={() => handlePageChange(page + 1)}
+              aria-label="Next page"
             >
               <ChevronRight className="h-4 w-4" />
             </Button>

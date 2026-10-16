@@ -76,8 +76,8 @@ async function Dashboard() {
         </ErrorBoundary>
       </div>
 
-      <div className="grid gap-4 lg:grid-cols-3">
-        <div className="lg:col-span-2">
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+        <div className="md:col-span-2 lg:col-span-2">
           <ErrorBoundary>
             <Suspense fallback={<CoursePerformanceSkeleton />}>
               <CoursePerformanceSection admin={admin} />
@@ -175,8 +175,8 @@ function DashboardSkeleton() {
         <ChartSkeleton />
         <ChartSkeleton />
       </div>
-      <div className="grid gap-4 lg:grid-cols-3">
-        <div className="lg:col-span-2">
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+        <div className="md:col-span-2 lg:col-span-2">
           <CoursePerformanceSkeleton />
         </div>
         <RecentActivitySkeleton />

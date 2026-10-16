@@ -221,7 +221,7 @@ export function CourseCard({ course }: { course: CourseWithCategory }) {
           <div className="flex items-baseline gap-2 border-t border-border pt-3 mt-1">
             {course.discount_price !== null && course.discount_price < course.price ? (
               <>
-                <span className="text-sm font-bold text-[#F26A21]">
+                <span className="text-sm font-bold text-brand-orange">
                   {formatINR(course.discount_price)}
                 </span>
                 <span className="text-xs text-muted-foreground line-through">

@@ -73,9 +73,9 @@ export function StudentAnalytics({ data }: { data: AnalyticsData }) {
                 <Line
                   type="monotone"
                   dataKey="count"
-                  stroke="#F26A21"
+                  stroke="var(--color-brand-orange)"
                   strokeWidth={2}
-                  dot={{ fill: "#F26A21", r: 3 }}
+                  dot={{ fill: "var(--color-brand-orange)", r: 3 }}
                   name="New Students"
                 />
               </LineChart>
@@ -146,7 +146,7 @@ export function StudentAnalytics({ data }: { data: AnalyticsData }) {
                     fontSize: "12px",
                   }}
                 />
-                <Bar dataKey="value" fill="#F26A21" radius={[0, 4, 4, 0]} name="Students" />
+                <Bar dataKey="value" fill="var(--color-brand-orange)" radius={[0, 4, 4, 0]} name="Students" />
               </BarChart>
             </ResponsiveContainer>
           ) : (
@@ -179,7 +179,7 @@ export function StudentAnalytics({ data }: { data: AnalyticsData }) {
                     fontSize: "12px",
                   }}
                 />
-                <Bar dataKey="value" fill="#16223B" radius={[4, 4, 0, 0]} name="Enrollments" />
+                <Bar dataKey="value" fill="var(--color-brand-blue)" radius={[4, 4, 0, 0]} name="Enrollments" />
               </BarChart>
             </ResponsiveContainer>
           ) : (

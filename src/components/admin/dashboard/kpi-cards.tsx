@@ -77,7 +77,7 @@ export function KpiCards({ kpis }: { kpis: DashboardKpis }) {
           <Card key={kpi.label} className="gap-3 px-5 py-5">
             <div className="flex items-center justify-between">
               <p className="text-sm text-muted-foreground">{kpi.label}</p>
-              <div className="flex size-9 items-center justify-center rounded-lg bg-[#F26A21]/10 text-[#F26A21]">
+              <div className="flex size-9 items-center justify-center rounded-lg bg-brand-orange/10 text-brand-orange">
                 <Icon className="size-4" />
               </div>
             </div>

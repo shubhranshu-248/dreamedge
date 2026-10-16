@@ -428,7 +428,7 @@ export function CourseForm({ course, categories }: CourseFormProps) {
           <Button
             type="button"
             disabled={isPending}
-            className="bg-[#F26A21] hover:bg-[#d95d1b] text-white"
+            className="bg-brand-orange hover:bg-brand-orange-dark text-white"
             onClick={() =>
               handleSubmit((v) => onSubmit(v as unknown as CourseFormValues, "published"))()
             }

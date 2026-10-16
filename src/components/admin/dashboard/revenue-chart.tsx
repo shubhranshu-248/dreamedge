@@ -61,9 +61,9 @@ export function RevenueChart({ data }: { data: MonthlyValue[] }) {
                 <Line
                   type="monotone"
                   dataKey="value"
-                  stroke="#F26A21"
+                  stroke="var(--color-brand-orange)"
                   strokeWidth={2.5}
-                  dot={{ r: 3, fill: "#F26A21", strokeWidth: 0 }}
+                  dot={{ r: 3, fill: "var(--color-brand-orange)", strokeWidth: 0 }}
                   activeDot={{ r: 5, strokeWidth: 0 }}
                 />
               </LineChart>

@@ -146,7 +146,7 @@ export function AdminShell({
     <>
       {/* Logo */}
       <div className="flex items-center gap-3 px-4 py-5 border-b border-border">
-        <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-[#F26A21]">
+        <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-brand-orange">
           <span className="text-white font-bold text-xs">DE</span>
         </div>
         <div className="flex-1 min-w-0">
@@ -167,7 +167,7 @@ export function AdminShell({
                 onClick={() => setSidebarOpen(false)}
                 className={`flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
                   active
-                    ? "bg-[#F26A21]/10 text-[#F26A21]"
+                    ? "bg-brand-orange/10 text-brand-orange"
                     : "text-muted-foreground hover:bg-accent hover:text-foreground"
                 }`}
               >
@@ -186,7 +186,7 @@ export function AdminShell({
                         onClick={() => setSidebarOpen(false)}
                         className={`flex items-center gap-2 rounded-md px-2 py-1.5 text-xs font-medium transition-colors ${
                           childActive
-                            ? "text-[#F26A21]"
+                            ? "text-brand-orange"
                             : "text-muted-foreground hover:text-foreground"
                         }`}
                       >
@@ -207,9 +207,10 @@ export function AdminShell({
         <div className="relative">
           <button
             onClick={() => setProfileOpen(!profileOpen)}
+            aria-label="User menu"
             className="flex items-center gap-3 w-full rounded-lg px-3 py-2 text-sm hover:bg-accent transition-colors"
           >
-            <div className="flex items-center justify-center w-8 h-8 rounded-full bg-[#16223B] text-white text-xs font-medium shrink-0">
+            <div className="flex items-center justify-center w-8 h-8 rounded-full bg-brand-blue text-white text-xs font-medium shrink-0">
               {getInitials(admin.full_name)}
             </div>
             <div className="flex-1 min-w-0 text-left">
@@ -244,7 +245,7 @@ export function AdminShell({
   );
 
   return (
-    <div className="flex h-screen overflow-hidden bg-background">
+    <div className="flex h-dvh overflow-hidden bg-background">
       {/* Desktop sidebar */}
       <aside className="hidden lg:flex lg:flex-col lg:w-64 border-r border-border bg-card">
         {sidebarContent}
@@ -257,9 +258,13 @@ export function AdminShell({
             className="fixed inset-0 bg-black/50"
             onClick={() => setSidebarOpen(false)}
           />
-          <aside className="fixed inset-y-0 left-0 z-50 flex w-64 flex-col bg-card border-r border-border">
+          <aside
+            aria-label="Navigation menu"
+            className="fixed inset-y-0 left-0 z-50 flex w-64 flex-col bg-card border-r border-border"
+          >
             <button
               onClick={() => setSidebarOpen(false)}
+              aria-label="Close navigation"
               className="absolute top-4 right-4 text-muted-foreground hover:text-foreground"
             >
               <X className="h-5 w-5" />
@@ -275,6 +280,7 @@ export function AdminShell({
         <header className="flex items-center gap-4 border-b border-border bg-card px-4 py-3 lg:px-6">
           <button
             onClick={() => setSidebarOpen(true)}
+            aria-label="Toggle navigation"
             className="lg:hidden text-muted-foreground hover:text-foreground"
           >
             <Menu className="h-5 w-5" />

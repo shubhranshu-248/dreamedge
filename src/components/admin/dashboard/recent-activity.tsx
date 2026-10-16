@@ -41,7 +41,7 @@ const ICONS: { match: RegExp; icon: React.ElementType; className: string }[] = [
   { match: /student|lead/, icon: Users, className: "bg-violet-500/10 text-violet-600 dark:text-violet-400" },
   { match: /test|question/, icon: ClipboardList, className: "bg-amber-500/10 text-amber-600 dark:text-amber-400" },
   { match: /live|class|recording/, icon: Video, className: "bg-rose-500/10 text-rose-600 dark:text-rose-400" },
-  { match: /course|content|subject|topic/, icon: BookOpen, className: "bg-[#F26A21]/10 text-[#F26A21]" },
+  { match: /course|content|subject|topic/, icon: BookOpen, className: "bg-brand-orange/10 text-brand-orange" },
 ];
 
 function iconFor(item: ActivityItem) {
