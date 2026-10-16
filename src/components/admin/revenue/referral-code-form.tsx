@@ -15,9 +15,17 @@ import { toast } from "sonner";
 import {
   createReferralCode,
   updateReferralCode,
-  generateReferralCode,
   type ReferralCodeRow,
 } from "@/app/admin/(panel)/revenue/actions";
+
+function generateReferralCode(): string {
+  const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+  let code = "DE";
+  for (let i = 0; i < 6; i++) {
+    code += chars[Math.floor(Math.random() * chars.length)];
+  }
+  return code;
+}
 
 interface ReferralCodeFormProps {
   open: boolean;

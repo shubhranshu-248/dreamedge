@@ -995,14 +995,6 @@ export async function deleteReferralCode(id: string) {
   }
 }
 
-export function generateReferralCode(): string {
-  const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
-  let code = "DE";
-  for (let i = 0; i < 6; i++) {
-    code += chars[Math.floor(Math.random() * chars.length)];
-  }
-  return code;
-}
 
 // ---------------------------------------------------------------------------
 // Analytics
