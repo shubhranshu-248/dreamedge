@@ -189,3 +189,71 @@ export interface LiveClass {
   status: "scheduled" | "live" | "ended" | "cancelled";
   recording_url: string | null;
 }
+
+export type LeadStatus = "new" | "contacted" | "interested" | "converted" | "lost";
+export type LeadSource = "website" | "referral" | "ad" | "walk_in" | "other";
+export type TestimonialType = "text" | "video";
+
+export interface Lead {
+  id: string;
+  name: string;
+  phone: string | null;
+  email: string | null;
+  source: LeadSource;
+  status: LeadStatus;
+  remarks: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface Testimonial {
+  id: string;
+  student_name: string;
+  content: string | null;
+  video_url: string | null;
+  type: TestimonialType;
+  year: number;
+  course_name: string | null;
+  marks_or_rank: string | null;
+  photo_url: string | null;
+  is_topper: boolean;
+  is_visible: boolean;
+  weight: number;
+  created_at: string;
+}
+
+export interface TestAttempt {
+  id: string;
+  student_id: string;
+  test_id: string;
+  score: number;
+  max_score: number;
+  time_taken_seconds: number;
+  attempt_number: number;
+  submitted_at: string;
+  test?: { name: string };
+}
+
+export interface Enrollment {
+  id: string;
+  student_id: string;
+  course_id: string;
+  purchased_at: string;
+  valid_until: string;
+  status: EnrollmentStatus;
+  course?: { id: string; name: string };
+}
+
+export interface StudentWithEnrollments extends Student {
+  enrollment_count: number;
+}
+
+export interface AuditLogEntry {
+  id: string;
+  user_id: string | null;
+  action: string;
+  entity_type: string;
+  entity_id: string | null;
+  metadata: Record<string, unknown> | null;
+  created_at: string;
+}

@@ -20,6 +20,10 @@ import {
   GitBranch,
   FileText,
   Library,
+  UserSearch,
+  BarChart3,
+  Target,
+  Award,
 } from "lucide-react";
 import { signOut } from "@/app/admin/login/actions";
 import type { AdminSession } from "@/lib/admin";
@@ -52,7 +56,17 @@ const navItems: NavItem[] = [
     ],
   },
   { label: "Live Classes", href: "/admin/live-classes", icon: Video },
-  { label: "Students", href: "/admin/students", icon: Users },
+  {
+    label: "Students",
+    href: "/admin/students",
+    icon: Users,
+    children: [
+      { label: "All Students", href: "/admin/students", icon: UserSearch },
+      { label: "Analytics", href: "/admin/students/analytics", icon: BarChart3 },
+      { label: "Leads", href: "/admin/students/leads", icon: Target },
+      { label: "Testimonials", href: "/admin/students/testimonials", icon: Award },
+    ],
+  },
   { label: "Revenue", href: "/admin/revenue", icon: IndianRupee },
   { label: "Engage", href: "/admin/engage", icon: Bell },
   { label: "Settings", href: "/admin/settings", icon: Settings },

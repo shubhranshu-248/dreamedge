@@ -1,0 +1,411 @@
+"use client";
+
+import { useEffect, useState, useTransition } from "react";
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetDescription,
+} from "@/components/ui/sheet";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import {
+  User,
+  Phone,
+  Mail,
+  MapPin,
+  Calendar,
+  Wallet,
+  BookOpen,
+  FileText,
+  CreditCard,
+  Activity,
+  ShieldBan,
+  ShieldCheck,
+  Loader2,
+} from "lucide-react";
+import { toast } from "sonner";
+import { fetchStudentDetail, updateStudentStatus } from "@/app/admin/(panel)/students/actions";
+
+interface StudentDetailProps {
+  studentId: string | null;
+  onClose: () => void;
+  onStatusChange: () => void;
+}
+
+const statusColors: Record<string, string> = {
+  active: "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400",
+  inactive: "bg-amber-500/10 text-amber-600 dark:text-amber-400",
+  blocked: "bg-red-500/10 text-red-600 dark:text-red-400",
+};
+
+export function StudentDetail({ studentId, onClose, onStatusChange }: StudentDetailProps) {
+  const [detail, setDetail] = useState<Record<string, unknown> | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [isPending, startTransition] = useTransition();
+
+  useEffect(() => {
+    if (!studentId) {
+      setDetail(null);
+      return;
+    }
+
+    setLoading(true);
+    fetchStudentDetail(studentId).then((result) => {
+      setLoading(false);
+      if (result.error) {
+        toast.error(result.error);
+        return;
+      }
+      setDetail(result.data as Record<string, unknown>);
+    });
+  }, [studentId]);
+
+  const student = detail?.student as Record<string, unknown> | undefined;
+  const enrollments = (detail?.enrollments ?? []) as Record<string, unknown>[];
+  const testAttempts = (detail?.testAttempts ?? []) as Record<string, unknown>[];
+  const orders = (detail?.orders ?? []) as Record<string, unknown>[];
+  const auditLog = (detail?.auditLog ?? []) as Record<string, unknown>[];
+
+  const handleStatusChange = (newStatus: "active" | "inactive" | "blocked") => {
+    if (!studentId) return;
+    startTransition(async () => {
+      const result = await updateStudentStatus(studentId, newStatus);
+      if (result.error) {
+        toast.error(result.error);
+      } else {
+        toast.success(`Student ${newStatus === "blocked" ? "blocked" : "status updated"}`);
+        const refreshed = await fetchStudentDetail(studentId);
+        if (refreshed.data) setDetail(refreshed.data as Record<string, unknown>);
+        onStatusChange();
+      }
+    });
+  };
+
+  const formatDate = (d: string) =>
+    new Date(d).toLocaleDateString("en-IN", {
+      day: "numeric",
+      month: "short",
+      year: "numeric",
+    });
+
+  const formatCurrency = (amount: number) =>
+    new Intl.NumberFormat("en-IN", { style: "currency", currency: "INR", maximumFractionDigits: 0 }).format(amount);
+
+  return (
+    <Sheet open={!!studentId} onOpenChange={(open) => !open && onClose()}>
+      <SheetContent side="right" className="w-full sm:max-w-lg overflow-y-auto">
+        {loading ? (
+          <div className="space-y-4 p-4">
+            <div className="flex items-center gap-4">
+              <Skeleton className="h-12 w-12 rounded-full" />
+              <div className="space-y-2">
+                <Skeleton className="h-5 w-40" />
+                <Skeleton className="h-4 w-24" />
+              </div>
+            </div>
+            <Skeleton className="h-8 w-full" />
+            <Skeleton className="h-48 w-full" />
+          </div>
+        ) : student ? (
+          <>
+            <SheetHeader className="border-b border-border pb-4">
+              <div className="flex items-start gap-4">
+                <div className="flex items-center justify-center w-12 h-12 rounded-full bg-[#16223B] text-white text-sm font-semibold shrink-0">
+                  {(student.full_name as string)
+                    .split(" ")
+                    .map((n) => n[0])
+                    .join("")
+                    .slice(0, 2)
+                    .toUpperCase()}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <SheetTitle className="text-lg">{student.full_name as string}</SheetTitle>
+                  <SheetDescription className="flex items-center gap-2 mt-1">
+                    <Badge className={statusColors[(student.status as string)] ?? ""} variant="secondary">
+                      {(student.status as string).charAt(0).toUpperCase() + (student.status as string).slice(1)}
+                    </Badge>
+                    <span className="text-xs text-muted-foreground">
+                      Joined {formatDate(student.created_at as string)}
+                    </span>
+                  </SheetDescription>
+                </div>
+              </div>
+
+              <div className="flex gap-2 mt-3">
+                {student.status !== "active" && (
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => handleStatusChange("active")}
+                    disabled={isPending}
+                  >
+                    <ShieldCheck className="h-3.5 w-3.5 mr-1.5" />
+                    Activate
+                  </Button>
+                )}
+                {student.status !== "blocked" && (
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="text-red-600 hover:text-red-700"
+                    onClick={() => handleStatusChange("blocked")}
+                    disabled={isPending}
+                  >
+                    <ShieldBan className="h-3.5 w-3.5 mr-1.5" />
+                    Block
+                  </Button>
+                )}
+                {isPending && <Loader2 className="h-4 w-4 animate-spin self-center" />}
+              </div>
+            </SheetHeader>
+
+            <Tabs defaultValue="profile" className="mt-4">
+              <TabsList className="w-full grid grid-cols-5">
+                <TabsTrigger value="profile" className="text-xs">
+                  <User className="h-3.5 w-3.5 sm:mr-1" />
+                  <span className="hidden sm:inline">Profile</span>
+                </TabsTrigger>
+                <TabsTrigger value="courses" className="text-xs">
+                  <BookOpen className="h-3.5 w-3.5 sm:mr-1" />
+                  <span className="hidden sm:inline">Courses</span>
+                </TabsTrigger>
+                <TabsTrigger value="tests" className="text-xs">
+                  <FileText className="h-3.5 w-3.5 sm:mr-1" />
+                  <span className="hidden sm:inline">Tests</span>
+                </TabsTrigger>
+                <TabsTrigger value="payments" className="text-xs">
+                  <CreditCard className="h-3.5 w-3.5 sm:mr-1" />
+                  <span className="hidden sm:inline">Payments</span>
+                </TabsTrigger>
+                <TabsTrigger value="activity" className="text-xs">
+                  <Activity className="h-3.5 w-3.5 sm:mr-1" />
+                  <span className="hidden sm:inline">Activity</span>
+                </TabsTrigger>
+              </TabsList>
+
+              {/* Profile Tab */}
+              <TabsContent value="profile" className="mt-4 space-y-3">
+                <InfoRow icon={Phone} label="Phone" value={student.phone as string} />
+                <InfoRow icon={Mail} label="Email" value={student.email as string} />
+                <InfoRow icon={MapPin} label="City" value={student.city as string} />
+                <InfoRow icon={MapPin} label="State" value={student.state as string} />
+                <InfoRow icon={Calendar} label="Class" value={student.class as string} />
+                <InfoRow icon={BookOpen} label="Board" value={student.board as string} />
+                <InfoRow icon={User} label="Referral Code" value={student.referral_code as string} />
+                <InfoRow
+                  icon={Wallet}
+                  label="Wallet Balance"
+                  value={formatCurrency(student.wallet_balance as number)}
+                />
+              </TabsContent>
+
+              {/* Courses Tab */}
+              <TabsContent value="courses" className="mt-4">
+                {enrollments.length === 0 ? (
+                  <EmptyTab message="No enrolled courses" />
+                ) : (
+                  <div className="space-y-3">
+                    {enrollments.map((e) => {
+                      const course = e.course as { name: string } | null;
+                      return (
+                        <div
+                          key={e.id as string}
+                          className="rounded-lg border border-border p-3 space-y-1"
+                        >
+                          <div className="flex items-center justify-between">
+                            <p className="font-medium text-sm">
+                              {course?.name ?? "Unknown Course"}
+                            </p>
+                            <Badge
+                              variant="secondary"
+                              className={
+                                e.status === "active"
+                                  ? statusColors.active
+                                  : e.status === "expired"
+                                  ? statusColors.inactive
+                                  : statusColors.blocked
+                              }
+                            >
+                              {(e.status as string).charAt(0).toUpperCase() + (e.status as string).slice(1)}
+                            </Badge>
+                          </div>
+                          <div className="flex gap-4 text-xs text-muted-foreground">
+                            <span>Purchased: {formatDate(e.purchased_at as string)}</span>
+                            <span>Valid until: {formatDate(e.valid_until as string)}</span>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </TabsContent>
+
+              {/* Tests Tab */}
+              <TabsContent value="tests" className="mt-4">
+                {testAttempts.length === 0 ? (
+                  <EmptyTab message="No test attempts" />
+                ) : (
+                  <div className="rounded-lg border border-border overflow-hidden">
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>Test</TableHead>
+                          <TableHead>Score</TableHead>
+                          <TableHead>Time</TableHead>
+                          <TableHead>Date</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {testAttempts.map((t) => {
+                          const test = t.test as { name: string } | null;
+                          return (
+                            <TableRow key={t.id as string}>
+                              <TableCell className="font-medium text-xs">
+                                {test?.name ?? "—"}
+                              </TableCell>
+                              <TableCell className="text-xs">
+                                {t.score as number}/{t.max_score as number}
+                              </TableCell>
+                              <TableCell className="text-xs">
+                                {Math.floor((t.time_taken_seconds as number) / 60)}m
+                              </TableCell>
+                              <TableCell className="text-xs">
+                                {formatDate(t.submitted_at as string)}
+                              </TableCell>
+                            </TableRow>
+                          );
+                        })}
+                      </TableBody>
+                    </Table>
+                  </div>
+                )}
+              </TabsContent>
+
+              {/* Payments Tab */}
+              <TabsContent value="payments" className="mt-4">
+                {orders.length === 0 ? (
+                  <EmptyTab message="No payment history" />
+                ) : (
+                  <div className="space-y-3">
+                    {orders.map((o) => {
+                      const course = o.course as { name: string } | null;
+                      return (
+                        <div
+                          key={o.id as string}
+                          className="rounded-lg border border-border p-3 space-y-1"
+                        >
+                          <div className="flex items-center justify-between">
+                            <p className="font-medium text-sm">{course?.name ?? "—"}</p>
+                            <Badge
+                              variant="secondary"
+                              className={
+                                o.status === "completed"
+                                  ? statusColors.active
+                                  : o.status === "failed"
+                                  ? statusColors.blocked
+                                  : statusColors.inactive
+                              }
+                            >
+                              {(o.status as string).charAt(0).toUpperCase() + (o.status as string).slice(1)}
+                            </Badge>
+                          </div>
+                          <div className="flex items-center justify-between text-xs text-muted-foreground">
+                            <span>{formatCurrency(o.final_amount as number)}</span>
+                            <span>{o.payment_method as string}</span>
+                            <span>{formatDate(o.created_at as string)}</span>
+                          </div>
+                          {typeof o.invoice_url === "string" && (
+                            <a
+                              href={o.invoice_url as string}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="text-xs text-[#F26A21] hover:underline"
+                            >
+                              View Invoice
+                            </a>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </TabsContent>
+
+              {/* Activity Tab */}
+              <TabsContent value="activity" className="mt-4">
+                {auditLog.length === 0 ? (
+                  <EmptyTab message="No recent activity" />
+                ) : (
+                  <div className="space-y-2">
+                    {auditLog.map((entry) => (
+                      <div
+                        key={entry.id as string}
+                        className="flex items-start gap-3 rounded-lg border border-border p-3"
+                      >
+                        <div className="mt-0.5 flex items-center justify-center w-6 h-6 rounded-full bg-muted">
+                          <Activity className="h-3 w-3 text-muted-foreground" />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-medium">
+                            {(entry.action as string).replace(/_/g, " ")}
+                          </p>
+                          <p className="text-xs text-muted-foreground">
+                            {entry.entity_type as string}
+                            {entry.entity_id ? ` #${(entry.entity_id as string).slice(0, 8)}` : ""}
+                          </p>
+                        </div>
+                        <span className="text-xs text-muted-foreground shrink-0">
+                          {formatDate(entry.created_at as string)}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </TabsContent>
+            </Tabs>
+          </>
+        ) : null}
+      </SheetContent>
+    </Sheet>
+  );
+}
+
+function InfoRow({
+  icon: Icon,
+  label,
+  value,
+}: {
+  icon: React.ElementType;
+  label: string;
+  value: string | null | undefined;
+}) {
+  return (
+    <div className="flex items-center gap-3 rounded-lg border border-border p-3">
+      <Icon className="h-4 w-4 text-muted-foreground shrink-0" />
+      <div className="flex-1 min-w-0">
+        <p className="text-xs text-muted-foreground">{label}</p>
+        <p className="text-sm font-medium truncate">{value || "—"}</p>
+      </div>
+    </div>
+  );
+}
+
+function EmptyTab({ message }: { message: string }) {
+  return (
+    <div className="flex items-center justify-center h-32 text-sm text-muted-foreground">
+      {message}
+    </div>
+  );
+}
