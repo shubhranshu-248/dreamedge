@@ -18,19 +18,8 @@ export const testSettingsSchema = z.object({
 
 export type TestSettingsValues = z.infer<typeof testSettingsSchema>;
 
-export const questionSchema = z.object({
-  type: z.enum([
-    "mcq_single",
-    "mcq_multiple",
-    "true_false",
-    "short_answer",
-    "match_pair",
-    "subjective",
-    "image_based",
-  ]),
+const baseQuestion = z.object({
   content: z.string().min(1, "Question text is required"),
-  options: z.record(z.string(), z.unknown()).nullable().default(null),
-  correct_answer: z.string().nullable().default(null),
   positive_marks: z.coerce.number().min(0).default(1),
   negative_marks: z.coerce.number().min(0).default(0),
   difficulty: z.enum(["easy", "medium", "hard"]).default("medium"),
@@ -38,5 +27,63 @@ export const questionSchema = z.object({
   image_url: z.string().nullable().default(null),
   hint: z.string().nullable().default(null),
 });
+
+const mcqOption = z.object({
+  id: z.string(),
+  text: z.string().min(1, "Option text is required"),
+  is_correct: z.boolean(),
+});
+
+const mcqSingleQuestion = baseQuestion.extend({
+  type: z.literal("mcq_single"),
+  options: z.array(mcqOption).min(2).max(6),
+  correct_answer: z.string().nullable().default(null),
+});
+
+const mcqMultipleQuestion = baseQuestion.extend({
+  type: z.literal("mcq_multiple"),
+  options: z.array(mcqOption).min(2).max(6),
+  correct_answer: z.string().nullable().default(null),
+});
+
+const trueFalseQuestion = baseQuestion.extend({
+  type: z.literal("true_false"),
+  options: z.record(z.string(), z.unknown()).nullable().default(null),
+  correct_answer: z.string().nullable().default(null),
+});
+
+const shortAnswerQuestion = baseQuestion.extend({
+  type: z.literal("short_answer"),
+  options: z.record(z.string(), z.unknown()).nullable().default(null),
+  correct_answer: z.string().nullable().default(null),
+});
+
+const matchPairQuestion = baseQuestion.extend({
+  type: z.literal("match_pair"),
+  options: z.record(z.string(), z.unknown()).nullable().default(null),
+  correct_answer: z.string().nullable().default(null),
+});
+
+const subjectiveQuestion = baseQuestion.extend({
+  type: z.literal("subjective"),
+  options: z.record(z.string(), z.unknown()).nullable().default(null),
+  correct_answer: z.string().nullable().default(null),
+});
+
+const imageBasedQuestion = baseQuestion.extend({
+  type: z.literal("image_based"),
+  options: z.record(z.string(), z.unknown()).nullable().default(null),
+  correct_answer: z.string().nullable().default(null),
+});
+
+export const questionSchema = z.discriminatedUnion("type", [
+  mcqSingleQuestion,
+  mcqMultipleQuestion,
+  trueFalseQuestion,
+  shortAnswerQuestion,
+  matchPairQuestion,
+  subjectiveQuestion,
+  imageBasedQuestion,
+]);
 
 export type QuestionFormValues = z.infer<typeof questionSchema>;

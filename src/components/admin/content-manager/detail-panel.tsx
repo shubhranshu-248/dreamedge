@@ -2,13 +2,16 @@
 
 import { FolderOpen, BookOpen, FileText, Video } from "lucide-react";
 import { useContentTree } from "@/stores/content-tree";
+import { useShallow } from "zustand/react/shallow";
 import { SubjectForm } from "./subject-form";
 import { TopicForm } from "./topic-form";
 import { ContentItemForm } from "./content-item-form";
 import type { Subject, Topic, ContentItem } from "@/types/database";
 
 export function DetailPanel() {
-  const { selectedNode, courseId } = useContentTree();
+  const { selectedNode, courseId } = useContentTree(
+    useShallow((s) => ({ selectedNode: s.selectedNode, courseId: s.courseId }))
+  );
 
   if (!courseId) {
     return (

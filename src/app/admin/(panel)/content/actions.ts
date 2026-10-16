@@ -80,6 +80,9 @@ export async function createCourse(formData: FormData) {
     }
 
     revalidatePath("/admin/content");
+    revalidatePath("/admin/content/manager");
+    revalidatePath("/courses");
+    revalidatePath(`/courses/${slug}`);
     return { success: true, id: data!.id };
   } catch (err) {
     console.error("createCourse failed:", err);
@@ -144,6 +147,9 @@ export async function updateCourse(id: string, formData: FormData) {
     }
 
     revalidatePath("/admin/content");
+    revalidatePath("/admin/content/manager");
+    revalidatePath("/courses");
+    if (values.slug) revalidatePath(`/courses/${values.slug}`);
     return { success: true };
   } catch (err) {
     console.error("updateCourse failed:", err);
@@ -165,6 +171,12 @@ export async function deleteCourse(id: string) {
       return { error: "Cannot delete a course with active enrollments" };
     }
 
+    const { data: course } = await supabase
+      .from("courses")
+      .select("slug")
+      .eq("id", id)
+      .single();
+
     const { error } = await supabase.from("courses").delete().eq("id", id);
 
     if (error) {
@@ -173,6 +185,9 @@ export async function deleteCourse(id: string) {
     }
 
     revalidatePath("/admin/content");
+    revalidatePath("/admin/content/manager");
+    revalidatePath("/courses");
+    if (course?.slug) revalidatePath(`/courses/${course.slug}`);
     return { success: true };
   } catch (err) {
     console.error("deleteCourse failed:", err);
@@ -224,6 +239,8 @@ export async function duplicateCourse(id: string) {
     }
 
     revalidatePath("/admin/content");
+    revalidatePath("/admin/content/manager");
+    revalidatePath("/courses");
     return { success: true, id: data.id };
   } catch (err) {
     console.error("duplicateCourse failed:", err);
@@ -239,6 +256,12 @@ export async function toggleCourseStatus(
     await assertAdmin(["super_admin", "content_creator"]);
     const supabase = await createClient();
 
+    const { data: course } = await supabase
+      .from("courses")
+      .select("slug")
+      .eq("id", id)
+      .single();
+
     const { error } = await supabase
       .from("courses")
       .update({ status: newStatus, updated_at: new Date().toISOString() })
@@ -250,12 +273,24 @@ export async function toggleCourseStatus(
     }
 
     revalidatePath("/admin/content");
+    revalidatePath("/admin/content/manager");
+    revalidatePath("/courses");
+    if (course?.slug) revalidatePath(`/courses/${course.slug}`);
     return { success: true };
   } catch (err) {
     console.error("toggleCourseStatus failed:", err);
     return { error: "You don't have permission to perform this action." };
   }
 }
+
+const ALLOWED_THUMBNAIL_TYPES = [
+  "image/jpeg",
+  "image/png",
+  "image/webp",
+  "image/avif",
+] as const;
+
+const ALLOWED_THUMBNAIL_EXTS = ["jpg", "jpeg", "png", "webp", "avif"];
 
 export async function uploadCourseThumbnail(courseId: string, formData: FormData) {
   try {
@@ -271,8 +306,21 @@ export async function uploadCourseThumbnail(courseId: string, formData: FormData
       return { error: "File must be under 2MB" };
     }
 
-    const ext = file.name.split(".").pop()?.toLowerCase() || "jpg";
+    if (!(ALLOWED_THUMBNAIL_TYPES as readonly string[]).includes(file.type)) {
+      return { error: "Only JPEG, PNG, WebP and AVIF images are allowed." };
+    }
+
+    const ext = file.name.split(".").pop()?.toLowerCase() || "";
+    if (!ALLOWED_THUMBNAIL_EXTS.includes(ext)) {
+      return { error: "Invalid file extension." };
+    }
+
     const path = `courses/${courseId}/thumbnail.${ext}`;
+
+    const staleExts = ALLOWED_THUMBNAIL_EXTS.filter((e) => e !== ext);
+    await supabase.storage
+      .from("course-thumbnails")
+      .remove(staleExts.map((e) => `courses/${courseId}/thumbnail.${e}`));
 
     const { error: uploadError } = await supabase.storage
       .from("course-thumbnails")
@@ -298,6 +346,8 @@ export async function uploadCourseThumbnail(courseId: string, formData: FormData
     }
 
     revalidatePath("/admin/content");
+    revalidatePath("/admin/content/manager");
+    revalidatePath("/courses");
     return { success: true, url: urlData.publicUrl };
   } catch (err) {
     console.error("uploadCourseThumbnail failed:", err);
@@ -332,6 +382,7 @@ export async function createCategory(formData: FormData) {
     }
 
     revalidatePath("/admin/content");
+    revalidatePath("/courses");
     return { success: true };
   } catch (err) {
     console.error("createCategory failed:", err);
@@ -362,6 +413,7 @@ export async function updateCategory(id: string, formData: FormData) {
     }
 
     revalidatePath("/admin/content");
+    revalidatePath("/courses");
     return { success: true };
   } catch (err) {
     console.error("updateCategory failed:", err);
@@ -393,6 +445,7 @@ export async function deleteCategory(id: string) {
     }
 
     revalidatePath("/admin/content");
+    revalidatePath("/courses");
     return { success: true };
   } catch (err) {
     console.error("deleteCategory failed:", err);
@@ -421,6 +474,7 @@ export async function reorderCategories(orderedIds: string[]) {
     }
 
     revalidatePath("/admin/content");
+    revalidatePath("/courses");
     return { success: true };
   } catch (err) {
     console.error("reorderCategories failed:", err);

@@ -28,7 +28,7 @@ export function ContentItemForm({ item }: { item: ContentItem }) {
   const [isPending, startTransition] = useTransition();
   const [uploading, setUploading] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
-  const store = useContentTree();
+  const updateContentInTree = useContentTree((s) => s.updateContentItem);
 
   function handleSave(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -64,7 +64,7 @@ export function ContentItemForm({ item }: { item: ContentItem }) {
       }
 
       if (result.data) {
-        store.updateContentItem(result.data);
+        updateContentInTree(result.data);
       }
       toast.success("Content updated");
     });

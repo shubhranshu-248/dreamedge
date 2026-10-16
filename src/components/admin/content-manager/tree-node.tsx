@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, memo } from "react";
 import {
   ChevronRight,
   ChevronDown,
@@ -65,7 +65,7 @@ interface TreeNodeProps {
   onDelete?: () => void;
 }
 
-export function TreeNodeRow({
+export const TreeNodeRow = memo(function TreeNodeRow({
   node,
   depth,
   isExpanded,
@@ -228,4 +228,4 @@ export function TreeNodeRow({
       </DropdownMenu>
     </div>
   );
-}
+});

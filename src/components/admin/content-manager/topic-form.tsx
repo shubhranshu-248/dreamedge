@@ -16,7 +16,7 @@ import type { Topic } from "@/types/database";
 
 export function TopicForm({ topic }: { topic: Topic }) {
   const [isPending, startTransition] = useTransition();
-  const store = useContentTree();
+  const updateTopicInTree = useContentTree((s) => s.updateTopic);
 
   function handleSave(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -35,7 +35,7 @@ export function TopicForm({ topic }: { topic: Topic }) {
       }
 
       if (result.data) {
-        store.updateTopic(result.data);
+        updateTopicInTree(result.data);
       }
       toast.success("Topic updated");
     });

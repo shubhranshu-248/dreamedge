@@ -35,6 +35,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { useTestBuilder, type QuestionDraft } from "@/stores/test-builder";
+import { useShallow } from "zustand/react/shallow";
 import { TestSettings } from "./test-settings";
 import { QuestionCard } from "./question-card";
 import { QuestionBankModal } from "./question-bank-modal";
@@ -136,18 +137,29 @@ export function TestBuilder({ courses, initialTest }: TestBuilderProps) {
     saving,
     lastSaved,
     editingQuestionId,
-    setTestId,
-    setSettings,
-    setQuestions,
-    addQuestion,
-    updateQuestion,
-    removeQuestion,
-    duplicateQuestion,
-    moveQuestion,
-    setEditingQuestion,
-    markSaving,
-    reset,
-  } = useTestBuilder();
+  } = useTestBuilder(
+    useShallow((s) => ({
+      testId: s.testId,
+      settings: s.settings,
+      questions: s.questions,
+      dirty: s.dirty,
+      saving: s.saving,
+      lastSaved: s.lastSaved,
+      editingQuestionId: s.editingQuestionId,
+    }))
+  );
+
+  const setTestId = useTestBuilder((s) => s.setTestId);
+  const setSettings = useTestBuilder((s) => s.setSettings);
+  const setQuestions = useTestBuilder((s) => s.setQuestions);
+  const addQuestion = useTestBuilder((s) => s.addQuestion);
+  const updateQuestion = useTestBuilder((s) => s.updateQuestion);
+  const removeQuestion = useTestBuilder((s) => s.removeQuestion);
+  const duplicateQuestion = useTestBuilder((s) => s.duplicateQuestion);
+  const moveQuestion = useTestBuilder((s) => s.moveQuestion);
+  const setEditingQuestion = useTestBuilder((s) => s.setEditingQuestion);
+  const markSaving = useTestBuilder((s) => s.markSaving);
+  const reset = useTestBuilder((s) => s.reset);
 
   const [showTypeSelector, setShowTypeSelector] = useState(false);
   const [showBankModal, setShowBankModal] = useState(false);

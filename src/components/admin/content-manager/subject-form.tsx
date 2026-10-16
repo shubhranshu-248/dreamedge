@@ -26,7 +26,7 @@ const COLORS = [
 
 export function SubjectForm({ subject }: { subject: Subject }) {
   const [isPending, startTransition] = useTransition();
-  const store = useContentTree();
+  const updateSubjectInTree = useContentTree((s) => s.updateSubject);
 
   function handleSave(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -50,7 +50,7 @@ export function SubjectForm({ subject }: { subject: Subject }) {
       }
 
       if (result.data) {
-        store.updateSubject(result.data);
+        updateSubjectInTree(result.data);
       }
       toast.success("Subject updated");
     });

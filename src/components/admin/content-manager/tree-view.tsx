@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useTransition } from "react";
+import { useEffect, useState, useTransition, useCallback } from "react";
 import {
   DndContext,
   closestCenter,
@@ -46,6 +46,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 
 import { TreeNodeRow } from "./tree-node";
 import { useContentTree, type NodeKind, type TreeNode } from "@/stores/content-tree";
+import { useShallow } from "zustand/react/shallow";
 import {
   fetchCourseTree,
   createSubject,
@@ -63,7 +64,34 @@ interface TreeViewProps {
 }
 
 export function TreeView({ courses }: TreeViewProps) {
-  const store = useContentTree();
+  const store = useContentTree(
+    useShallow((s) => ({
+      courseId: s.courseId,
+      tree: s.tree,
+      expandedIds: s.expandedIds,
+      selectedNode: s.selectedNode,
+      searchQuery: s.searchQuery,
+      typeFilter: s.typeFilter,
+      statusFilter: s.statusFilter,
+      loading: s.loading,
+      setCourseId: s.setCourseId,
+      setTree: s.setTree,
+      toggleExpand: s.toggleExpand,
+      expandAll: s.expandAll,
+      selectNode: s.selectNode,
+      setSearchQuery: s.setSearchQuery,
+      setTypeFilter: s.setTypeFilter,
+      setStatusFilter: s.setStatusFilter,
+      setLoading: s.setLoading,
+      addSubject: s.addSubject,
+      addTopic: s.addTopic,
+      addContentItem: s.addContentItem,
+      removeSubject: s.removeSubject,
+      removeTopic: s.removeTopic,
+      removeContentItem: s.removeContentItem,
+      reorderChildren: s.reorderChildren,
+    }))
+  );
   const [isPending, startTransition] = useTransition();
 
   const [addDialogOpen, setAddDialogOpen] = useState(false);
@@ -88,9 +116,11 @@ export function TreeView({ courses }: TreeViewProps) {
 
   useEffect(() => {
     if (!store.courseId) return;
+    let cancelled = false;
 
     store.setLoading(true);
     fetchCourseTree(store.courseId).then((result) => {
+      if (cancelled) return;
       store.setLoading(false);
       if (result.error) {
         toast.error(result.error);
@@ -99,6 +129,8 @@ export function TreeView({ courses }: TreeViewProps) {
       store.setTree((result.data as unknown as TreeNode[]) || []);
       store.expandAll();
     });
+
+    return () => { cancelled = true; };
   }, [store.courseId]);
 
   function handleCourseChange(id: string | null) {

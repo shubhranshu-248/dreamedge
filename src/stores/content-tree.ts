@@ -242,29 +242,27 @@ export const useContentTree = create<ContentTreeState>((set, get) => ({
 
   reorderChildren: (parentId, orderedIds) =>
     set((state) => {
+      function sortAndWeight(nodes: TreeNode[], ids: string[]): TreeNode[] {
+        return ids
+          .map((id) => nodes.find((n) => n.id === id)!)
+          .filter(Boolean)
+          .map((node, idx) => ({ ...node, weight: idx }));
+      }
+
       if (parentId === null) {
-        const sorted = orderedIds
-          .map((id) => state.tree.find((n) => n.id === id)!)
-          .filter(Boolean);
-        return { tree: sorted };
+        return { tree: sortAndWeight(state.tree, orderedIds) };
       }
 
       return {
         tree: state.tree.map((subj) => {
           if (subj.id === parentId) {
-            const sorted = orderedIds
-              .map((id) => subj.children.find((c) => c.id === id)!)
-              .filter(Boolean);
-            return { ...subj, children: sorted };
+            return { ...subj, children: sortAndWeight(subj.children, orderedIds) };
           }
           return {
             ...subj,
             children: subj.children.map((topic) => {
               if (topic.id === parentId) {
-                const sorted = orderedIds
-                  .map((id) => topic.children.find((c) => c.id === id)!)
-                  .filter(Boolean);
-                return { ...topic, children: sorted };
+                return { ...topic, children: sortAndWeight(topic.children, orderedIds) };
               }
               return topic;
             }),

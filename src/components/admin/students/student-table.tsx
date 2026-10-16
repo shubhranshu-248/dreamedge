@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition, useCallback } from "react";
+import { useState, useTransition, useCallback, useRef, useEffect } from "react";
 import {
   Table,
   TableBody,
@@ -85,14 +85,25 @@ export function StudentTable({ initialData, initialCount, courses }: StudentTabl
     [search, statusFilter, cityFilter, courseFilter, page]
   );
 
+  const debounceRef = useRef<NodeJS.Timeout | null>(null);
+
   const handleSearch = useCallback(
     (value: string) => {
       setSearch(value);
-      setPage(1);
-      loadData({ search: value, page: 1 });
+      if (debounceRef.current) clearTimeout(debounceRef.current);
+      debounceRef.current = setTimeout(() => {
+        setPage(1);
+        loadData({ search: value, page: 1 });
+      }, 350);
     },
     [loadData]
   );
+
+  useEffect(() => {
+    return () => {
+      if (debounceRef.current) clearTimeout(debounceRef.current);
+    };
+  }, []);
 
   const handleFilterChange = useCallback(
     (key: string, value: string) => {
@@ -144,33 +155,65 @@ export function StudentTable({ initialData, initialCount, courses }: StudentTabl
     });
   };
 
-  const handleExportCsv = () => {
-    const rows = selectedRows.size > 0
-      ? data.filter((s) => selectedRows.has(s.id))
-      : data;
+  const handleExportCsv = async () => {
+    function escapeCSV(value: unknown): string {
+      if (value == null) return "";
+      let str = String(value);
+      if (/^[=+\-@\t\r]/.test(str)) {
+        str = `'${str}`;
+      }
+      if (/[",\n\r]/.test(str)) {
+        str = `"${str.replace(/"/g, '""')}"`;
+      }
+      return str;
+    }
 
-    const headers = ["Name", "Phone", "Email", "City", "Status", "Enrolled Courses", "Joined"];
-    const csvRows = rows.map((s) => [
-      s.full_name,
-      s.phone || "",
-      s.email || "",
-      s.city || "",
-      s.status,
-      s.enrollment_count,
-      new Date(s.created_at).toLocaleDateString(),
-    ]);
+    try {
+      const result = await fetchStudents({
+        search,
+        status: statusFilter,
+        city: cityFilter,
+        courseId: courseFilter === "all" ? undefined : courseFilter,
+        page: 1,
+        pageSize: 10000,
+      });
 
-    const csv = [headers, ...csvRows]
-      .map((row) => row.map((cell) => `"${cell}"`).join(","))
-      .join("\n");
-    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `students-${new Date().toISOString().slice(0, 10)}.csv`;
-    a.click();
-    URL.revokeObjectURL(url);
-    toast.success("CSV exported");
+      if (result.error || !result.data) {
+        toast.error("Failed to export data");
+        return;
+      }
+
+      const allStudents = result.data as unknown as StudentWithEnrollments[];
+      const rows = selectedRows.size > 0
+        ? allStudents.filter((s) => selectedRows.has(s.id))
+        : allStudents;
+
+      const headers = ["Name", "Phone", "Email", "City", "Status", "Enrolled Courses", "Joined"];
+      const csvRows = rows.map((s) =>
+        [
+          escapeCSV(s.full_name),
+          escapeCSV(s.phone),
+          escapeCSV(s.email),
+          escapeCSV(s.city),
+          escapeCSV(s.status),
+          escapeCSV(s.enrollment_count),
+          escapeCSV(s.created_at ? new Date(s.created_at).toLocaleDateString("en-IN") : ""),
+        ].join(",")
+      );
+
+      const csv = [headers.join(","), ...csvRows].join("\n");
+      const BOM = "﻿";
+      const blob = new Blob([BOM + csv], { type: "text/csv;charset=utf-8;" });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = `students-${new Date().toISOString().slice(0, 10)}.csv`;
+      link.click();
+      URL.revokeObjectURL(url);
+      toast.success("CSV exported");
+    } catch {
+      toast.error("Failed to export data");
+    }
   };
 
   const formatDate = (d: string) =>
