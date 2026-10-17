@@ -82,6 +82,11 @@ function copyReferralCode(code: string) {
 
 const QUICK_ACTIONS = [
   {
+    icon: BookOpen,
+    label: "My Courses",
+    href: "/dashboard/my-courses",
+  },
+  {
     icon: Search,
     label: "Browse Courses",
     href: "/courses",
@@ -160,7 +165,7 @@ export function DashboardContent({
             </h2>
             {coursesWithData.length > 4 && (
               <Link
-                href="/dashboard/courses"
+                href="/dashboard/my-courses"
                 className="flex items-center gap-1 text-sm font-medium text-brand-orange hover:underline"
               >
                 View All <ArrowRight className="h-4 w-4" />

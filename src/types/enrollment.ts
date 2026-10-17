@@ -23,5 +23,7 @@ export interface EnrollmentWithCourse extends Enrollment {
     class: string | null;
     subject: string | null;
     teacher_name: string | null;
+    total_lessons: number;
+    duration_hours: number | null;
   } | null;
 }
