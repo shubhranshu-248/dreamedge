@@ -7,6 +7,7 @@ import '../core/services/storage_service.dart';
 import '../features/auth/forgot_password_screen.dart';
 import '../features/auth/login_screen.dart';
 import '../features/auth/register_screen.dart';
+import '../features/courses/course_detail_screen.dart';
 import '../features/onboarding/onboarding_screen.dart';
 import '../features/shell/app_shell.dart';
 import '../features/splash/splash_screen.dart';
@@ -72,6 +73,12 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/',
         builder: (context, state) => const AppShell(),
+      ),
+      GoRoute(
+        path: '/course/:id',
+        builder: (context, state) => CourseDetailScreen(
+          courseId: state.pathParameters['id']!,
+        ),
       ),
     ],
     errorBuilder: (context, state) => Scaffold(

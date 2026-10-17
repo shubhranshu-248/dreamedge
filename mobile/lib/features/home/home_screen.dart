@@ -1,10 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
-import '../../core/providers/auth_provider.dart';
+import '../../core/providers/course_provider.dart';
 import '../../core/providers/supabase_provider.dart';
 import '../../shared/theme/colors.dart';
 import '../../shared/theme/typography.dart';
+import '../../shared/widgets/shimmer_box.dart';
+import 'widgets/category_chips.dart';
+import 'widgets/course_list_tile.dart';
+import 'widgets/featured_courses_section.dart';
+import 'widgets/greeting_header.dart';
+import 'widgets/search_bar_widget.dart';
 
 class HomeScreen extends ConsumerWidget {
   const HomeScreen({super.key});
@@ -14,55 +21,141 @@ class HomeScreen extends ConsumerWidget {
     final user = ref.watch(currentUserProvider);
     final displayName =
         user?.userMetadata?['full_name'] as String? ?? 'Student';
+    final allCourses = ref.watch(allCoursesProvider);
 
     return Scaffold(
       backgroundColor: AppColors.white,
       body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.all(24),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                'Hello, $displayName 👋',
-                style: AppTypography.heading2,
+        child: RefreshIndicator(
+          color: AppColors.orange,
+          onRefresh: () async {
+            ref.invalidate(featuredCoursesProvider);
+            ref.invalidate(allCoursesProvider);
+            ref.invalidate(categoriesProvider);
+          },
+          child: CustomScrollView(
+            slivers: [
+              SliverToBoxAdapter(
+                child: GreetingHeader(displayName: displayName),
               ),
-              const SizedBox(height: 8),
-              Text(
-                'Welcome to Dream Edge!',
-                style: AppTypography.bodyLarge.copyWith(
-                  color: AppColors.textSecondary,
-                ),
-              ),
-              const Spacer(),
-              Center(
-                child: Column(
-                  children: [
-                    Icon(
-                      Icons.rocket_launch_outlined,
-                      size: 80,
-                      color: AppColors.orange.withValues(alpha: 0.3),
-                    ),
-                    const SizedBox(height: 16),
-                    Text(
-                      'Courses coming soon!',
-                      style: AppTypography.bodyLarge.copyWith(
-                        color: AppColors.textSecondary,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              const Spacer(),
-              Center(
-                child: TextButton.icon(
-                  icon: const Icon(Icons.logout),
-                  label: const Text('Logout'),
-                  onPressed: () async {
-                    await ref.read(authServiceProvider).logout();
+              SliverToBoxAdapter(
+                child: SearchBarWidget(
+                  onTap: () {
+                    final shell = context.findAncestorStateOfType<State>();
+                    if (shell != null) {
+                      DefaultTabController.of(context);
+                    }
                   },
                 ),
               ),
+              const SliverToBoxAdapter(child: CategoryChips()),
+              const SliverToBoxAdapter(child: SizedBox(height: 24)),
+              const SliverToBoxAdapter(child: FeaturedCoursesSection()),
+              const SliverToBoxAdapter(child: SizedBox(height: 28)),
+              SliverToBoxAdapter(
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 20),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text('Continue Learning', style: AppTypography.heading3),
+                    ],
+                  ),
+                ),
+              ),
+              const SliverToBoxAdapter(child: SizedBox(height: 12)),
+              SliverToBoxAdapter(
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 20),
+                  child: Container(
+                    padding: const EdgeInsets.all(24),
+                    decoration: BoxDecoration(
+                      color: AppColors.surface,
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Column(
+                      children: [
+                        Icon(
+                          Icons.school_outlined,
+                          size: 48,
+                          color: AppColors.gray.withValues(alpha: 0.5),
+                        ),
+                        const SizedBox(height: 12),
+                        Text(
+                          'No courses yet',
+                          style: AppTypography.bodyMedium
+                              .copyWith(color: AppColors.textSecondary),
+                        ),
+                        const SizedBox(height: 12),
+                        TextButton(
+                          onPressed: () {},
+                          child: const Text('Browse Courses'),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+              const SliverToBoxAdapter(child: SizedBox(height: 28)),
+              SliverToBoxAdapter(
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 20),
+                  child: Text('Popular Courses', style: AppTypography.heading3),
+                ),
+              ),
+              const SliverToBoxAdapter(child: SizedBox(height: 12)),
+              allCourses.when(
+                data: (courses) {
+                  if (courses.isEmpty) {
+                    return SliverToBoxAdapter(
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 20),
+                        child: Text(
+                          'No courses available yet',
+                          style: AppTypography.bodyMedium
+                              .copyWith(color: AppColors.textSecondary),
+                        ),
+                      ),
+                    );
+                  }
+                  return SliverPadding(
+                    padding: const EdgeInsets.symmetric(horizontal: 20),
+                    sliver: SliverList(
+                      delegate: SliverChildBuilderDelegate(
+                        (context, index) => CourseListTile(
+                          course: courses[index],
+                          onTap: () =>
+                              context.push('/course/${courses[index].id}'),
+                        ),
+                        childCount: courses.length,
+                      ),
+                    ),
+                  );
+                },
+                loading: () => SliverToBoxAdapter(
+                  child: ShimmerList(itemCount: 3, itemHeight: 100),
+                ),
+                error: (error, _) => SliverToBoxAdapter(
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 20),
+                    child: Column(
+                      children: [
+                        Text(
+                          'Could not load courses',
+                          style: AppTypography.bodyMedium
+                              .copyWith(color: AppColors.error),
+                        ),
+                        const SizedBox(height: 8),
+                        TextButton(
+                          onPressed: () => ref.invalidate(allCoursesProvider),
+                          child: const Text('Retry'),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+              const SliverToBoxAdapter(child: SizedBox(height: 24)),
             ],
           ),
         ),
