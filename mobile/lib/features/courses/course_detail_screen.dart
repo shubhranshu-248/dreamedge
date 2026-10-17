@@ -347,21 +347,29 @@ class _SubjectTileState extends State<_SubjectTile> {
               data: (list) => Column(
                 children: list
                     .map(
-                      (topic) => Padding(
-                        padding: const EdgeInsets.fromLTRB(48, 0, 16, 12),
-                        child: Row(
-                          children: [
-                            const Icon(Icons.lock_outline,
-                                size: 16, color: AppColors.gray),
-                            const SizedBox(width: 10),
-                            Expanded(
-                              child: Text(
-                                topic.name,
-                                style: AppTypography.bodySmall
-                                    .copyWith(color: AppColors.textPrimary),
+                      (topic) => InkWell(
+                        onTap: () => context.push(
+                          '/lessons/${topic.id}',
+                          extra: topic.name,
+                        ),
+                        child: Padding(
+                          padding: const EdgeInsets.fromLTRB(48, 0, 16, 12),
+                          child: Row(
+                            children: [
+                              const Icon(Icons.play_circle_outline_rounded,
+                                  size: 16, color: AppColors.orange),
+                              const SizedBox(width: 10),
+                              Expanded(
+                                child: Text(
+                                  topic.name,
+                                  style: AppTypography.bodySmall
+                                      .copyWith(color: AppColors.textPrimary),
+                                ),
                               ),
-                            ),
-                          ],
+                              const Icon(Icons.chevron_right_rounded,
+                                  size: 18, color: AppColors.gray),
+                            ],
+                          ),
                         ),
                       ),
                     )

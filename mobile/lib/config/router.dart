@@ -8,7 +8,9 @@ import '../features/auth/forgot_password_screen.dart';
 import '../features/auth/login_screen.dart';
 import '../features/auth/register_screen.dart';
 import '../features/courses/course_detail_screen.dart';
+import '../features/lessons/lessons_screen.dart';
 import '../features/onboarding/onboarding_screen.dart';
+import '../features/player/video_player_screen.dart';
 import '../features/shell/app_shell.dart';
 import '../features/splash/splash_screen.dart';
 
@@ -78,6 +80,20 @@ final routerProvider = Provider<GoRouter>((ref) {
         path: '/course/:id',
         builder: (context, state) => CourseDetailScreen(
           courseId: state.pathParameters['id']!,
+        ),
+      ),
+      GoRoute(
+        path: '/lessons/:topicId',
+        builder: (context, state) {
+          final topicId = state.pathParameters['topicId']!;
+          final topicName = state.extra as String? ?? 'Lessons';
+          return LessonsScreen(topicId: topicId, topicName: topicName);
+        },
+      ),
+      GoRoute(
+        path: '/player/:contentId',
+        builder: (context, state) => VideoPlayerScreen(
+          contentId: state.pathParameters['contentId']!,
         ),
       ),
     ],
