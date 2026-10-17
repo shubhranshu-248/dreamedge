@@ -1,23 +1,36 @@
-node_modules/
+# Environment & secrets
+.env
 .env.local
 .env*.local
+
+# Node
+node_modules/
+
+# Next.js
 .next/
 out/
 
-# Flutter
-mobile/.dart_tool/
-mobile/build/
-mobile/.flutter-plugins
-mobile/.flutter-plugins-dependencies
-mobile/.packages
-mobile/android/.gradle/
-mobile/android/local.properties
-mobile/android/app/build/
+# IDE
 *.iml
 .idea/
+.vscode/
 
-# Supabase
+# OS
+.DS_Store
+Thumbs.db
+
+# Supabase local
 supabase/.temp/
 
-# Claude
+# AI tooling
 .claude/
+AGENTS.md
+
+# Flutter (handled by mobile/.gitignore for details)
+mobile/.flutter-plugins
+mobile/.flutter-plugins-dependencies
+
+# Android
+*.jks
+*.keystore
+local.properties
