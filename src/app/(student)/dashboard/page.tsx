@@ -49,11 +49,33 @@ async function fetchStudentProgress(studentId: string) {
     const supabase = await createClient();
     const { data } = await supabase
       .from("student_progress")
-      .select("id, status, progress_pct, completed_at")
+      .select("id, status, progress_pct, completed_at, lesson_id")
       .eq("student_id", studentId);
     return data ?? [];
   } catch {
     return [];
+  }
+}
+
+async function fetchHoursLearned(completedLessonIds: string[]) {
+  if (completedLessonIds.length === 0) return 0;
+
+  try {
+    const supabase = await createClient();
+    const { data: lessons } = await supabase
+      .from("lessons")
+      .select("duration_minutes")
+      .in("id", completedLessonIds);
+
+    if (!lessons) return 0;
+
+    const totalMinutes = lessons.reduce(
+      (sum: number, l: any) => sum + (l.duration_minutes ?? 0),
+      0
+    );
+    return Math.round((totalMinutes / 60) * 10) / 10;
+  } catch {
+    return 0;
   }
 }
 
@@ -65,15 +87,21 @@ export default async function DashboardPage() {
     fetchStudentProgress(student.id),
   ]);
 
-  const completedLessons = progress.filter(
+  const completedProgress = progress.filter(
     (p: any) => p.status === "completed"
-  ).length;
+  );
+  const completedLessons = completedProgress.length;
+
+  const completedLessonIds = completedProgress.map((p: any) => p.lesson_id);
+  const hoursLearned = await fetchHoursLearned(completedLessonIds);
 
   const avgScore =
     progress.length > 0
       ? Math.round(
-          progress.reduce((sum: number, p: any) => sum + (p.progress_pct ?? 0), 0) /
-            progress.length
+          progress.reduce(
+            (sum: number, p: any) => sum + (p.progress_pct ?? 0),
+            0
+          ) / progress.length
         )
       : 0;
 
@@ -84,7 +112,7 @@ export default async function DashboardPage() {
       stats={{
         enrolledCourses: enrollments.length,
         completedLessons,
-        hoursLearned: 0,
+        hoursLearned,
         avgScore,
       }}
     />

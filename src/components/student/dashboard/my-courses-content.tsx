@@ -6,11 +6,21 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import type { EnrollmentWithCourse } from "@/types/enrollment";
 
-interface MyCoursesContentProps {
-  enrollments: EnrollmentWithCourse[];
+interface CourseProgress {
+  total: number;
+  completed: number;
+  pct: number;
 }
 
-export function MyCoursesContent({ enrollments }: MyCoursesContentProps) {
+interface MyCoursesContentProps {
+  enrollments: EnrollmentWithCourse[];
+  progress: Record<string, CourseProgress>;
+}
+
+export function MyCoursesContent({
+  enrollments,
+  progress,
+}: MyCoursesContentProps) {
   const activeCourses = enrollments.filter((e) => e.course != null);
 
   return (
@@ -50,6 +60,11 @@ export function MyCoursesContent({ enrollments }: MyCoursesContentProps) {
         <div className="mt-8 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
           {activeCourses.map((enrollment) => {
             const course = enrollment.course!;
+            const cp = progress[enrollment.course_id];
+            const pct = cp?.pct ?? 0;
+            const completed = cp?.completed ?? 0;
+            const total = cp?.total ?? 0;
+
             return (
               <Link
                 key={enrollment.id}
@@ -91,24 +106,32 @@ export function MyCoursesContent({ enrollments }: MyCoursesContentProps) {
 
                   {/* Meta */}
                   <div className="mt-2 flex items-center gap-2 text-xs text-muted-foreground">
-                    {course.total_lessons > 0 && (
+                    {total > 0 && (
+                      <span>
+                        {completed} of {total} lessons
+                      </span>
+                    )}
+                    {total === 0 && course.total_lessons > 0 && (
                       <span>{course.total_lessons} lessons</span>
                     )}
-                    {course.total_lessons > 0 && course.duration_hours && (
-                      <span aria-hidden="true">&middot;</span>
-                    )}
                     {course.duration_hours && (
-                      <span>{course.duration_hours}h</span>
+                      <>
+                        <span aria-hidden="true">&middot;</span>
+                        <span>{course.duration_hours}h</span>
+                      </>
                     )}
                   </div>
 
-                  {/* Progress placeholder */}
+                  {/* Progress */}
                   <div className="mt-3">
                     <div className="flex items-center justify-between text-xs text-muted-foreground">
-                      <span>0% complete</span>
+                      <span>{pct}% complete</span>
                     </div>
                     <div className="mt-1.5 h-2 w-full overflow-hidden rounded-full bg-muted">
-                      <div className="h-full w-0 rounded-full bg-brand-orange" />
+                      <div
+                        className="h-full rounded-full bg-brand-orange transition-all duration-300"
+                        style={{ width: `${pct}%` }}
+                      />
                     </div>
                   </div>
 
