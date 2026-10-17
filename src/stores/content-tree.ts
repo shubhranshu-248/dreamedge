@@ -8,8 +8,8 @@ export interface TreeNode {
   kind: NodeKind;
   name: string;
   weight: number;
-  status?: ContentStatus;
-  contentType?: ContentType;
+  status?: string;
+  contentType?: string;
   children: TreeNode[];
   data: Subject | Topic | ContentItem;
 }

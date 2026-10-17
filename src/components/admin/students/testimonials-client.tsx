@@ -86,7 +86,7 @@ export function TestimonialsClient({ initialData }: { initialData: Testimonial[]
     startTransition(async () => {
       const result = await fetchTestimonials();
       if (!result.error) {
-        setData(result.data as Testimonial[]);
+        setData(result.data as unknown as Testimonial[]);
       }
     });
   };

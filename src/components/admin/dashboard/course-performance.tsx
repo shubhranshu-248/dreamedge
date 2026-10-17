@@ -74,9 +74,9 @@ export function CoursePerformance({ courses }: { courses: CoursePerformanceRow[]
                       >
                         {course.name}
                       </Link>
-                      {course.status !== "published" && (
-                        <Badge variant="outline" className="capitalize">
-                          {course.status}
+                      {!course.is_published && (
+                        <Badge variant="outline">
+                          Draft
                         </Badge>
                       )}
                     </div>

@@ -1,15 +1,16 @@
 import { create } from "zustand";
 import type { QuestionType, Difficulty } from "@/types/database";
+import type { Json } from "@/types/supabase";
 
 export interface QuestionDraft {
   id: string;
-  type: QuestionType;
+  type: QuestionType | string;
   content: string;
-  options: Record<string, unknown> | null;
-  correct_answer: string | null;
+  options: Json | null;
+  correct_answer: Json | null;
   positive_marks: number;
   negative_marks: number;
-  difficulty: Difficulty;
+  difficulty: Difficulty | string;
   topic_tag: string | null;
   image_url: string | null;
   hint: string | null;
@@ -20,11 +21,11 @@ interface TestSettings {
   name: string;
   course_id: string;
   instructions: string;
-  duration_min: number;
+  duration_minutes: number;
   max_attempts: number;
-  pass_pct: number;
-  shuffle: boolean;
-  show_results: boolean;
+  pass_percentage: number;
+  shuffle_questions: boolean;
+  show_results_immediately: boolean;
   certificate_enabled: boolean;
   negative_marking: boolean;
 }
@@ -59,11 +60,11 @@ const defaultSettings: TestSettings = {
   name: "Untitled Test",
   course_id: "",
   instructions: "",
-  duration_min: 60,
+  duration_minutes: 60,
   max_attempts: 1,
-  pass_pct: 40,
-  shuffle: false,
-  show_results: true,
+  pass_percentage: 40,
+  shuffle_questions: false,
+  show_results_immediately: true,
   certificate_enabled: false,
   negative_marking: false,
 };

@@ -120,11 +120,11 @@ export function OrdersTable({ initialData, initialCount, courses }: OrdersTableP
     const headers = ["Order ID", "Student", "Course", "Amount (₹)", "Discount (₹)", "Final (₹)", "Method", "Razorpay ID", "Status", "Date"];
     const rows = result.data.map((r: Record<string, unknown>) => {
       const student = r.student as { full_name: string } | null;
-      const course = r.course as { name: string } | null;
+      const course = r.course as { title: string } | null;
       return [
         escapeCSV((r.id as string).slice(0, 8)),
         escapeCSV(student?.full_name),
-        escapeCSV(course?.name),
+        escapeCSV(course?.title),
         escapeCSV(r.amount),
         escapeCSV(r.discount_amount),
         escapeCSV(r.final_amount),
@@ -262,7 +262,7 @@ export function OrdersTable({ initialData, initialCount, courses }: OrdersTableP
                     {order.student?.full_name ?? "—"}
                   </TableCell>
                   <TableCell className="max-w-[160px] truncate">
-                    {order.course?.name ?? "—"}
+                    {order.course?.title ?? "—"}
                   </TableCell>
                   <TableCell className="text-right font-medium">
                     {formatINR(order.final_amount)}

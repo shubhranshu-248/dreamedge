@@ -5,7 +5,7 @@ import { DetailPanel } from "./detail-panel";
 import type { Course } from "@/types/database";
 
 interface Props {
-  courses: Pick<Course, "id" | "name" | "status">[];
+  courses: Pick<Course, "id" | "title" | "is_published">[];
 }
 
 export function ContentManagerClient({ courses }: Props) {

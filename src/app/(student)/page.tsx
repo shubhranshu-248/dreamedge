@@ -1,12 +1,12 @@
 import { createClient } from "@/lib/supabase/server";
 import { HeroSection } from "@/components/student/home/hero-section";
-
-export const instant = false;
 import { StatsBar } from "@/components/student/home/stats-bar";
 import { FeaturesSection } from "@/components/student/home/features-section";
 import { PopularCourses } from "@/components/student/home/popular-courses";
 import { TestimonialsSection } from "@/components/student/home/testimonials-section";
 import { CtaSection } from "@/components/student/home/cta-section";
+
+export const instant = false;
 
 async function fetchCourses() {
   try {
@@ -30,11 +30,15 @@ async function fetchTestimonials() {
     const supabase = await createClient();
     const { data } = await supabase
       .from("testimonials")
-      .select("id, student_name, class, rating, content, avatar_url")
-      .eq("is_featured", true)
-      .order("created_at", { ascending: false })
+      .select("id, student_name, class, rating, content, student_photo_url")
+      .eq("is_visible", true)
+      .order("weight", { ascending: false })
       .limit(6);
-    return data ?? [];
+
+    return (data ?? []).map((t) => ({
+      ...t,
+      avatar_url: t.student_photo_url,
+    }));
   } catch {
     return [];
   }
@@ -51,8 +55,8 @@ export default async function HomePage() {
       <HeroSection />
       <StatsBar />
       <FeaturesSection />
-      <PopularCourses courses={courses as any[]} />
-      <TestimonialsSection testimonials={testimonials as any[]} />
+      <PopularCourses courses={courses} />
+      <TestimonialsSection testimonials={testimonials} />
       <CtaSection />
     </>
   );

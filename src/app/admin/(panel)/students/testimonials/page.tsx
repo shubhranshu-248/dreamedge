@@ -19,7 +19,7 @@ function TestimonialsSkeleton() {
 
 async function TestimonialsLoader() {
   const result = await fetchTestimonials();
-  return <TestimonialsClient initialData={(result.data ?? []) as Testimonial[]} />;
+  return <TestimonialsClient initialData={(result.data ?? []) as unknown as Testimonial[]} />;
 }
 
 export default function TestimonialsPage() {

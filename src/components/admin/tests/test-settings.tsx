@@ -7,7 +7,7 @@ import { useTestBuilder } from "@/stores/test-builder";
 
 interface CourseOption {
   id: string;
-  name: string;
+  title: string;
 }
 
 interface TestSettingsProps {
@@ -36,7 +36,7 @@ export function TestSettings({ courses }: TestSettingsProps) {
           <option value="">No course (standalone)</option>
           {courses.map((c) => (
             <option key={c.id} value={c.id}>
-              {c.name}
+              {c.title}
             </option>
           ))}
         </select>
@@ -61,9 +61,9 @@ export function TestSettings({ courses }: TestSettingsProps) {
             type="number"
             min={1}
             max={600}
-            value={settings.duration_min}
+            value={settings.duration_minutes}
             onChange={(e) =>
-              setSettings({ duration_min: parseInt(e.target.value) || 60 })
+              setSettings({ duration_minutes: parseInt(e.target.value) || 60 })
             }
             className="h-9"
           />
@@ -94,9 +94,9 @@ export function TestSettings({ courses }: TestSettingsProps) {
             type="number"
             min={0}
             max={100}
-            value={settings.pass_pct}
+            value={settings.pass_percentage}
             onChange={(e) =>
-              setSettings({ pass_pct: parseInt(e.target.value) || 0 })
+              setSettings({ pass_percentage: parseInt(e.target.value) || 0 })
             }
             className="h-9 w-20"
           />
@@ -108,16 +108,16 @@ export function TestSettings({ courses }: TestSettingsProps) {
         <div className="flex items-center justify-between">
           <label className="text-sm font-medium">Shuffle Questions</label>
           <Switch
-            checked={settings.shuffle}
-            onCheckedChange={(v) => setSettings({ shuffle: v })}
+            checked={settings.shuffle_questions}
+            onCheckedChange={(v) => setSettings({ shuffle_questions: v })}
           />
         </div>
 
         <div className="flex items-center justify-between">
           <label className="text-sm font-medium">Show Results</label>
           <Switch
-            checked={settings.show_results}
-            onCheckedChange={(v) => setSettings({ show_results: v })}
+            checked={settings.show_results_immediately}
+            onCheckedChange={(v) => setSettings({ show_results_immediately: v })}
           />
         </div>
 

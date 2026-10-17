@@ -3,17 +3,18 @@
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { assertAdmin } from "@/lib/auth-guard";
-import type { QuestionType, Difficulty, QuestionBankItem } from "@/types/database";
+import type { Json } from "@/types/supabase";
+import type { QuestionType, Difficulty } from "@/types/database";
 
 interface QuestionPayload {
   id?: string;
-  type: QuestionType;
+  type: QuestionType | string;
   content: string;
-  options: Record<string, unknown> | null;
-  correct_answer: string | null;
+  options: Json | null;
+  correct_answer: Json | null;
   positive_marks: number;
   negative_marks: number;
-  difficulty: Difficulty;
+  difficulty: Difficulty | string;
   topic_tag: string | null;
   image_url: string | null;
   hint: string | null;
@@ -25,13 +26,12 @@ interface TestPayload {
   name: string;
   course_id?: string;
   instructions?: string;
-  duration_min: number;
+  duration_minutes: number;
   max_attempts: number;
-  pass_pct: number;
-  shuffle: boolean;
-  show_results: boolean;
+  pass_percentage: number;
+  shuffle_questions: boolean;
+  show_results_immediately: boolean;
   certificate_enabled: boolean;
-  negative_marking: boolean;
   status: "draft" | "published";
   questions: QuestionPayload[];
 }
@@ -43,13 +43,12 @@ async function upsertTest(payload: TestPayload) {
     name: payload.name,
     course_id: payload.course_id || null,
     instructions: payload.instructions || null,
-    duration_min: payload.duration_min,
+    duration_minutes: payload.duration_minutes,
     max_attempts: payload.max_attempts,
-    shuffle: payload.shuffle,
-    pass_pct: payload.pass_pct,
-    show_results: payload.show_results,
+    shuffle_questions: payload.shuffle_questions,
+    pass_percentage: payload.pass_percentage,
+    show_results_immediately: payload.show_results_immediately,
     certificate_enabled: payload.certificate_enabled,
-    negative_marking: payload.negative_marking,
     status: payload.status,
     updated_at: new Date().toISOString(),
   };
@@ -215,7 +214,7 @@ export async function fetchTests(filters?: {
 
     let query = supabase
       .from("tests")
-      .select("*, course:courses(id, name)")
+      .select("*, course:courses(id, title)")
       .order("created_at", { ascending: false });
 
     if (filters?.course_id) {
@@ -305,7 +304,7 @@ export async function fetchQuestionBank() {
       console.error("fetchQuestionBank failed:", error);
       return { error: "Something went wrong. Please try again." };
     }
-    return { data: (data || []) as QuestionBankItem[] };
+    return { data: data || [] };
   } catch (err) {
     console.error("fetchQuestionBank failed:", err);
     return { error: "You don't have permission to perform this action." };
@@ -313,13 +312,13 @@ export async function fetchQuestionBank() {
 }
 
 export async function addToQuestionBank(question: {
-  type: QuestionType;
+  type: QuestionType | string;
   content: string;
-  options: Record<string, unknown> | null;
-  correct_answer: string | null;
+  options: Json | null;
+  correct_answer: Json;
   positive_marks: number;
   negative_marks: number;
-  difficulty: Difficulty;
+  difficulty: Difficulty | string;
   topic_tag: string | null;
   image_url: string | null;
   hint: string | null;
@@ -332,7 +331,7 @@ export async function addToQuestionBank(question: {
       .from("question_bank")
       .insert({
         ...question,
-        usage_count: 0,
+        used_count: 0,
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
       })
@@ -354,13 +353,13 @@ export async function addToQuestionBank(question: {
 export async function updateQuestionBankItem(
   id: string,
   updates: Partial<{
-    type: QuestionType;
+    type: QuestionType | string;
     content: string;
-    options: Record<string, unknown> | null;
-    correct_answer: string | null;
+    options: Json | null;
+    correct_answer: Json;
     positive_marks: number;
     negative_marks: number;
-    difficulty: Difficulty;
+    difficulty: Difficulty | string;
     topic_tag: string | null;
     image_url: string | null;
     hint: string | null;
@@ -412,8 +411,8 @@ export async function fetchCourses() {
     const supabase = await createClient();
     const { data, error } = await supabase
       .from("courses")
-      .select("id, name")
-      .order("name");
+      .select("id, title")
+      .order("title");
     if (error) {
       console.error("fetchCourses failed:", error);
       return { error: "Something went wrong. Please try again." };

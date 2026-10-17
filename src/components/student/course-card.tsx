@@ -12,7 +12,7 @@ interface CourseCardProps {
   className: string | null;
   subject: string | null;
   teacherName: string | null;
-  studentCount: number;
+  studentCount: number | null;
   ratingAvg: number | null;
 }
 
@@ -70,7 +70,7 @@ export function CourseCard({
               {ratingAvg.toFixed(1)}
             </span>
           )}
-          {studentCount > 0 && (
+          {studentCount != null && studentCount > 0 && (
             <span className="flex items-center gap-1">
               <Users className="h-3.5 w-3.5" />
               {studentCount.toLocaleString("en-IN")}

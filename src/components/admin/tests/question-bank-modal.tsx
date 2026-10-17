@@ -21,7 +21,7 @@ interface QuestionBankModalProps {
   onImport: (questions: QuestionBankItem[]) => void;
 }
 
-const typeLabels: Record<QuestionType, string> = {
+const typeLabels: Record<string, string> = {
   mcq_single: "MCQ (Single)",
   mcq_multiple: "MCQ (Multiple)",
   true_false: "True/False",
@@ -48,7 +48,7 @@ export function QuestionBankModal({
     setSelected(new Set());
     startTransition(async () => {
       const result = await fetchQuestionBank();
-      if (result.data) setQuestions(result.data);
+      if (result.data) setQuestions(result.data as unknown as QuestionBankItem[]);
     });
   }, [open]);
 
@@ -161,7 +161,7 @@ export function QuestionBankModal({
                       <span>{typeLabels[q.type]}</span>
                       <span className="capitalize">{q.difficulty}</span>
                       {q.topic_tag && <span>{q.topic_tag}</span>}
-                      <span>Used {q.usage_count}x</span>
+                      <span>Used {q.used_count}x</span>
                     </div>
                   </div>
                 </button>

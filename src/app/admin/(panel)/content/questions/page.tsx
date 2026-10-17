@@ -7,7 +7,7 @@ export const metadata = { title: "Question Bank — Dream Edge Admin" };
 
 async function QBankLoader() {
   const result = await fetchQuestionBank();
-  return <QuestionBankClient questions={result.data || []} />;
+  return <QuestionBankClient questions={(result.data || []) as unknown as import("@/types/database").QuestionBankItem[]} />;
 }
 
 function QBankSkeleton() {

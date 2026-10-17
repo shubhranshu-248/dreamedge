@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { assertAdmin } from "@/lib/auth-guard";
+import type { Database } from "@/types/supabase";
 
 function toSlug(text: string): string {
   return text
@@ -61,12 +62,12 @@ export async function updateSubject(
     await assertAdmin(["super_admin", "content_creator"]);
     const supabase = await createClient();
 
-    const update: Record<string, unknown> = { ...fields };
+    const update = { ...fields } as Record<string, unknown>;
     if (fields.name) update.slug = toSlug(fields.name);
 
     const { data, error } = await supabase
       .from("subjects")
-      .update(update)
+      .update(update as Database["public"]["Tables"]["subjects"]["Update"])
       .eq("id", id)
       .select()
       .single();
@@ -154,12 +155,12 @@ export async function updateTopic(
     await assertAdmin(["super_admin", "content_creator"]);
     const supabase = await createClient();
 
-    const update: Record<string, unknown> = { ...fields };
+    const update = { ...fields } as Record<string, unknown>;
     if (fields.name) update.slug = toSlug(fields.name);
 
     const { data, error } = await supabase
       .from("topics")
-      .update(update)
+      .update(update as Database["public"]["Tables"]["topics"]["Update"])
       .eq("id", id)
       .select()
       .single();
@@ -256,7 +257,7 @@ export async function updateContentItem(
 
     const { data, error } = await supabase
       .from("content_items")
-      .update(fields)
+      .update(fields as Database["public"]["Tables"]["content_items"]["Update"])
       .eq("id", id)
       .select()
       .single();

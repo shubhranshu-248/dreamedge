@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { createServiceClient } from "@/lib/supabase/service";
 import { assertAdmin } from "@/lib/auth-guard";
+import type { Json } from "@/types/supabase";
 
 function sanitizeSearch(input: string): string {
   return input.replace(/[,().%_*]/g, "");
@@ -457,8 +458,8 @@ export async function updateRolePermissions(roleId: string, formData: FormData) 
       action: "update_permissions",
       entity_type: "role",
       entity_id: roleId,
-      old_data: role.permissions as Record<string, unknown>,
-      new_data: permissions as Record<string, unknown>,
+      old_data: role.permissions as Json,
+      new_data: permissions as Json,
     });
 
     revalidatePath("/admin/settings");
@@ -644,7 +645,7 @@ export async function updateSettings(entries: { key: string; value: unknown }[])
         .from("site_settings")
         .upsert({
           key: entry.key,
-          value: entry.value as Record<string, unknown>,
+          value: entry.value as Json,
           updated_at: new Date().toISOString(),
           updated_by: adminUser.id,
         });

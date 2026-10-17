@@ -1,6 +1,6 @@
 export function getYouTubeId(url: string): string | null {
   const patterns = [
-    /(?:youtube\.com\/watch\?v=)([\w-]+)/,
+    /(?:youtube\.com\/watch\?.*v=)([\w-]+)/,
     /(?:youtu\.be\/)([\w-]+)/,
     /(?:youtube\.com\/embed\/)([\w-]+)/,
   ];

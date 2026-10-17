@@ -114,7 +114,7 @@ export function OrderDetailDrawer({ orderId, onClose }: OrderDetailDrawerProps) 
               {/* Course Info */}
               <section>
                 <h4 className="text-sm font-medium text-muted-foreground mb-2">Course</h4>
-                <p className="font-medium">{detail.course?.name ?? "—"}</p>
+                <p className="font-medium">{detail.course?.title ?? "—"}</p>
               </section>
 
               <Separator />
@@ -205,11 +205,11 @@ export function OrderDetailDrawer({ orderId, onClose }: OrderDetailDrawerProps) 
                     <div className="space-y-1.5 text-sm">
                       <div className="flex justify-between">
                         <span className="text-muted-foreground">Enrolled On</span>
-                        <span>{dateFormatter.format(new Date(detail.enrollment.purchased_at))}</span>
+                        <span>{detail.enrollment.purchased_at ? dateFormatter.format(new Date(detail.enrollment.purchased_at)) : "—"}</span>
                       </div>
                       <div className="flex justify-between">
                         <span className="text-muted-foreground">Valid Until</span>
-                        <span>{dateFormatter.format(new Date(detail.enrollment.valid_until))}</span>
+                        <span>{detail.enrollment.valid_until ? dateFormatter.format(new Date(detail.enrollment.valid_until)) : "—"}</span>
                       </div>
                       <div className="flex justify-between">
                         <span className="text-muted-foreground">Status</span>

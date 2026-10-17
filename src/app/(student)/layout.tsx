@@ -21,9 +21,9 @@ async function getSocialLinks() {
 
     const map = Object.fromEntries(data.map((row) => [row.key, row.value]));
     return {
-      youtube: map.social_youtube ?? undefined,
-      instagram: map.social_instagram ?? undefined,
-      telegram: map.social_telegram ?? undefined,
+      youtube: (map.social_youtube as string) ?? undefined,
+      instagram: (map.social_instagram as string) ?? undefined,
+      telegram: (map.social_telegram as string) ?? undefined,
     };
   } catch {
     return undefined;

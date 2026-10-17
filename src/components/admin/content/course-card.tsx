@@ -55,7 +55,8 @@ export function CourseCard({ course }: { course: CourseWithCategory }) {
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [loading, setLoading] = useState(false);
 
-  const status = statusConfig[course.status];
+  const statusKey = course.is_published ? "published" : "draft";
+  const status = statusConfig[statusKey];
 
   async function handleDuplicate() {
     setLoading(true);
@@ -69,7 +70,7 @@ export function CourseCard({ course }: { course: CourseWithCategory }) {
   }
 
   async function handleStatusToggle() {
-    const newStatus = course.status === "published" ? "draft" : "published";
+    const newStatus = course.is_published ? "draft" : "published";
     setLoading(true);
     const result = await toggleCourseStatus(course.id, newStatus);
     setLoading(false);
@@ -111,7 +112,7 @@ export function CourseCard({ course }: { course: CourseWithCategory }) {
           {course.thumbnail_url ? (
             <Image
               src={course.thumbnail_url}
-              alt={course.name}
+              alt={course.title}
               fill
               className="object-cover"
               sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
@@ -119,7 +120,7 @@ export function CourseCard({ course }: { course: CourseWithCategory }) {
           ) : (
             <div className="flex h-full items-center justify-center">
               <span className="text-3xl font-bold text-muted-foreground/30">
-                {course.name.charAt(0)}
+                {course.title.charAt(0)}
               </span>
             </div>
           )}
@@ -143,7 +144,7 @@ export function CourseCard({ course }: { course: CourseWithCategory }) {
           <div className="flex items-start justify-between gap-2">
             <div className="min-w-0 flex-1">
               <h3 className="truncate text-sm font-semibold leading-tight">
-                {course.name}
+                {course.title}
               </h3>
               {course.course_categories && (
                 <Badge variant="secondary" className="mt-1.5 text-xs font-normal">
@@ -175,7 +176,7 @@ export function CourseCard({ course }: { course: CourseWithCategory }) {
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem onClick={handleStatusToggle}>
-                  {course.status === "published" ? (
+                  {course.is_published ? (
                     <>
                       <EyeOff className="mr-2 h-4 w-4" />
                       Unpublish
@@ -187,7 +188,7 @@ export function CourseCard({ course }: { course: CourseWithCategory }) {
                     </>
                   )}
                 </DropdownMenuItem>
-                {course.status !== "archived" && (
+                {!course.is_published && (
                   <DropdownMenuItem onClick={handleArchive}>
                     <Archive className="mr-2 h-4 w-4" />
                     Archive
@@ -213,19 +214,19 @@ export function CourseCard({ course }: { course: CourseWithCategory }) {
             </span>
             <span className="flex items-center gap-1">
               <Calendar className="h-3.5 w-3.5" />
-              {formatDate(course.created_at)}
+              {course.created_at ? formatDate(course.created_at) : "—"}
             </span>
           </div>
 
           {/* Price */}
           <div className="flex items-baseline gap-2 border-t border-border pt-3 mt-1">
-            {course.discount_price !== null && course.discount_price < course.price ? (
+            {course.original_price !== null && course.original_price > course.price ? (
               <>
                 <span className="text-sm font-bold text-brand-orange">
-                  {formatINR(course.discount_price)}
+                  {formatINR(course.price)}
                 </span>
                 <span className="text-xs text-muted-foreground line-through">
-                  {formatINR(course.price)}
+                  {formatINR(course.original_price)}
                 </span>
               </>
             ) : (
@@ -243,7 +244,7 @@ export function CourseCard({ course }: { course: CourseWithCategory }) {
           <DialogHeader>
             <DialogTitle>Delete course?</DialogTitle>
             <DialogDescription>
-              This will permanently delete &ldquo;{course.name}&rdquo;. This action
+              This will permanently delete &ldquo;{course.title}&rdquo;. This action
               cannot be undone.
             </DialogDescription>
           </DialogHeader>

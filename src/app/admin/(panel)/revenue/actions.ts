@@ -40,7 +40,7 @@ export interface OrderRow {
   remarks: string | null;
   created_at: string;
   student: { full_name: string; phone: string | null; email: string | null } | null;
-  course: { name: string } | null;
+  course: { title: string } | null;
 }
 
 export interface OrderDetail extends OrderRow {
@@ -48,8 +48,8 @@ export interface OrderDetail extends OrderRow {
   updated_at: string;
   enrollment: {
     id: string;
-    purchased_at: string;
-    valid_until: string;
+    purchased_at: string | null;
+    valid_until: string | null;
     status: string;
   } | null;
 }
@@ -75,7 +75,7 @@ export interface RefundRow {
     id: string;
     final_amount: number;
     student: { full_name: string } | null;
-    course: { name: string } | null;
+    course: { title: string } | null;
   } | null;
 }
 
@@ -100,7 +100,7 @@ export interface InvoiceRow {
   final_amount: number;
   created_at: string;
   student: { full_name: string } | null;
-  course: { name: string } | null;
+  course: { title: string } | null;
 }
 
 export interface RevenueStats {
@@ -160,7 +160,7 @@ export async function fetchOrders(filters: OrderFilters = {}) {
          payment_method, razorpay_order_id, razorpay_payment_id, status,
          invoice_url, invoice_number, referral_code_used, remarks, created_at,
          student:students(full_name, phone, email),
-         course:courses(name)`,
+         course:courses(title)`,
         { count: "exact" }
       )
       .order("created_at", { ascending: false });
@@ -240,7 +240,7 @@ export async function getOrderDetail(orderId: string) {
            invoice_url, invoice_number, referral_code_used, remarks,
            processed_by, created_at, updated_at,
            student:students(full_name, phone, email),
-           course:courses(name)`
+           course:courses(title)`
         )
         .eq("id", orderId)
         .single(),
@@ -285,7 +285,7 @@ export async function getOrderDetail(orderId: string) {
       created_at: row.created_at,
       updated_at: row.updated_at,
       student: row.student as unknown as OrderDetail["student"],
-      course: row.course as unknown as OrderDetail["course"],
+      course: row.course as unknown as OrderRow["course"],
       enrollment: enrollmentByOrder.data ?? null,
     };
 
@@ -306,7 +306,7 @@ export async function exportOrdersCsv(filters: OrderFilters = {}) {
         `id, amount, discount_amount, final_amount, payment_method,
          razorpay_payment_id, status, invoice_number, created_at,
          student:students(full_name, phone, email),
-         course:courses(name)`
+         course:courses(title)`
       )
       .order("created_at", { ascending: false });
 
@@ -354,7 +354,7 @@ export async function searchStudentsForPayment(query: string) {
       .from("students")
       .select("id, full_name, phone, email")
       .or(`full_name.ilike.%${safe}%,phone.ilike.%${safe}%,email.ilike.%${safe}%`)
-      .eq("status", "active")
+      .eq("is_active", true)
       .limit(20);
 
     if (error) return { data: null, error: error.message };
@@ -371,9 +371,9 @@ export async function fetchPublishedCourses() {
 
     const { data, error } = await supabase
       .from("courses")
-      .select("id, name, price, discount_price, validity_days")
-      .eq("status", "published")
-      .order("name");
+      .select("id, title, price, original_price")
+      .eq("is_published", true)
+      .order("title");
 
     if (error) return { data: null, error: error.message };
     return { data: data ?? [], error: null };
@@ -421,10 +421,10 @@ export async function recordManualPayment(formData: FormData) {
       return { error: "Student already has an active enrollment for this course." };
     }
 
-    // Get course validity
+    // Get course details
     const { data: course, error: courseError } = await supabase
       .from("courses")
-      .select("validity_days, price")
+      .select("price")
       .eq("id", courseId)
       .single();
 
@@ -434,7 +434,8 @@ export async function recordManualPayment(formData: FormData) {
 
     const discountAmount = Math.max(0, Number(course.price) - amount);
     const validUntil = new Date(paymentDate);
-    validUntil.setDate(validUntil.getDate() + course.validity_days);
+    // Default validity: 365 days (course table no longer carries a validity column)
+    validUntil.setDate(validUntil.getDate() + 365);
 
     // Create order
     const { data: order, error: orderError } = await supabase
@@ -508,7 +509,7 @@ export async function fetchRefunds(filters: RefundFilters = {}) {
       .from("refunds")
       .select(
         `id, order_id, amount, reason, status, processed_by, processed_at, created_at,
-         order:orders(id, final_amount, student:students(full_name), course:courses(name))`,
+         order:orders(id, final_amount, student:students(full_name), course:courses(title))`,
         { count: "exact" }
       )
       .order("created_at", { ascending: false });
@@ -534,7 +535,7 @@ export async function fetchRefunds(filters: RefundFilters = {}) {
         id: string;
         final_amount: number;
         student: { full_name: string } | null;
-        course: { name: string } | null;
+        course: { title: string } | null;
       } | null;
 
       return {
@@ -738,7 +739,7 @@ export async function fetchInvoices(filters: {
       .select(
         `id, invoice_number, invoice_url, final_amount, created_at,
          student:students(full_name),
-         course:courses(name)`,
+         course:courses(title)`,
         { count: "exact" }
       )
       .eq("status", "completed")
@@ -1139,7 +1140,7 @@ export async function fetchCourseRevenue(limit = 10) {
     await assertAdmin(["super_admin", "accountant"]);
     const supabase = await createClient();
 
-    const { data, error } = await supabase.rpc("get_top_courses", { course_limit: limit });
+    const { data, error } = await supabase.rpc("get_top_courses", { result_limit: limit });
 
     if (error) {
       return { data: null, error: error.message };

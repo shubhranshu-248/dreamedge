@@ -1,7 +1,7 @@
 import { createClient } from "@supabase/supabase-js";
 
-// WARNING: This client uses the SERVICE ROLE key which bypasses RLS.
-// Only use in server actions — NEVER expose to the client.
+import type { Database } from "@/types/supabase";
+
 export function createServiceClient() {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -12,7 +12,7 @@ export function createServiceClient() {
     );
   }
 
-  return createClient(url, key, {
+  return createClient<Database>(url, key, {
     auth: { autoRefreshToken: false, persistSession: false },
   });
 }

@@ -26,23 +26,32 @@ export type EnrollmentStatus = "active" | "expired" | "cancelled";
 
 export interface Course {
   id: string;
-  category_id: string | null;
-  name: string;
+  title: string;
   slug: string;
   description: string | null;
-  short_description: string | null;
+  long_description: string | null;
   thumbnail_url: string | null;
+  preview_video_url: string | null;
+  class: string | null;
+  subject: string | null;
+  teacher_name: string | null;
+  teacher_avatar_url: string | null;
   price: number;
-  discount_price: number | null;
-  validity_days: number;
-  language: CourseLanguage;
-  status: ContentStatus;
-  is_featured: boolean;
-  difficulty: Difficulty | null;
-  meta: Record<string, string> | null;
-  total_students: number;
-  created_at: string;
-  updated_at: string;
+  original_price: number | null;
+  currency: string | null;
+  duration_hours: number | null;
+  total_lessons: number | null;
+  difficulty: string | null;
+  is_published: boolean | null;
+  is_featured: boolean | null;
+  student_count: number | null;
+  rating_avg: number | null;
+  rating_count: number | null;
+  tags: string[] | null;
+  meta_title: string | null;
+  meta_description: string | null;
+  created_at: string | null;
+  updated_at: string | null;
 }
 
 export interface Subject {
@@ -50,7 +59,7 @@ export interface Subject {
   course_id: string;
   name: string;
   slug: string;
-  color_code: string;
+  color_code: string | null;
   weight: number;
   is_visible: boolean;
 }
@@ -67,7 +76,7 @@ export interface Topic {
 export interface ContentItem {
   id: string;
   topic_id: string;
-  type: ContentType;
+  type: string;
   title: string;
   description: string | null;
   file_url: string | null;
@@ -77,9 +86,9 @@ export interface ContentItem {
   is_downloadable: boolean;
   is_printable: boolean;
   play_limit: number | null;
-  status: ContentStatus;
+  status: string;
   weight: number;
-  metadata: Record<string, unknown> | null;
+  metadata: unknown;
 }
 
 export interface Student {
@@ -142,20 +151,20 @@ export interface Test {
 }
 
 export interface TestWithCourse extends Test {
-  course: { id: string; name: string } | null;
+  course: { id: string; title: string } | null;
   question_count: number;
 }
 
 export interface Question {
   id: string;
   test_id: string;
-  type: QuestionType;
+  type: string;
   content: string;
-  options: Record<string, unknown> | null;
-  correct_answer: string | null;
+  options: unknown;
+  correct_answer: unknown;
   positive_marks: number;
   negative_marks: number;
-  difficulty: Difficulty;
+  difficulty: string;
   topic_tag: string | null;
   image_url: string | null;
   hint: string | null;
@@ -164,17 +173,17 @@ export interface Question {
 
 export interface QuestionBankItem {
   id: string;
-  type: QuestionType;
+  type: string;
   content: string;
-  options: Record<string, unknown> | null;
-  correct_answer: string | null;
+  options: unknown;
+  correct_answer: unknown;
   positive_marks: number;
   negative_marks: number;
-  difficulty: Difficulty;
+  difficulty: string;
   topic_tag: string | null;
   image_url: string | null;
   hint: string | null;
-  usage_count: number;
+  used_count: number;
   created_at: string;
   updated_at: string;
 }
@@ -241,7 +250,7 @@ export interface Enrollment {
   purchased_at: string;
   valid_until: string;
   status: EnrollmentStatus;
-  course?: { id: string; name: string };
+  course?: { id: string; title: string };
 }
 
 export interface StudentWithEnrollments extends Student {

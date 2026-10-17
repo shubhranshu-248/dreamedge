@@ -14,7 +14,7 @@ interface Course {
   class: string | null;
   subject: string | null;
   teacher_name: string | null;
-  student_count: number;
+  student_count: number | null;
   rating_avg: number | null;
 }
 

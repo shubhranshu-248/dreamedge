@@ -9,7 +9,7 @@ interface Testimonial {
   student_name: string;
   class: string | null;
   rating: number | null;
-  content: string;
+  content: string | null;
   avatar_url: string | null;
 }
 
@@ -92,7 +92,7 @@ export function TestimonialsSection({
             <Quote className="mb-4 h-8 w-8 text-brand-orange/30" />
 
             <p className="text-base leading-relaxed text-card-foreground sm:text-lg">
-              &ldquo;{current.content}&rdquo;
+              &ldquo;{current.content ?? ""}&rdquo;
             </p>
 
             <div className="mt-6 flex items-center gap-4">

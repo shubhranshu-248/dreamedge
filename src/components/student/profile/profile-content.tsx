@@ -37,8 +37,8 @@ interface Student {
   avatar_url: string | null;
   referral_code: string | null;
   free_trial_expires_at: string | null;
-  created_at: string;
-  status: string | null;
+  created_at: string | null;
+  is_active: boolean | null;
   [key: string]: unknown;
 }
 
@@ -486,7 +486,7 @@ export function ProfileContent({ student }: { student: Student }) {
             <Calendar className="h-4 w-4 text-muted-foreground" />
             <span className="text-muted-foreground">Member since</span>
             <span className="font-medium text-foreground">
-              {formatDate(student.created_at)}
+              {student.created_at ? formatDate(student.created_at) : "—"}
             </span>
           </div>
 
@@ -511,7 +511,7 @@ export function ProfileContent({ student }: { student: Student }) {
               <span className="font-medium text-foreground">
                 {trialExpired
                   ? "Expired"
-                  : `Expires ${formatDate(student.free_trial_expires_at)}`}
+                  : `Expires ${formatDate(student.free_trial_expires_at!)}`}
               </span>
             </div>
           )}

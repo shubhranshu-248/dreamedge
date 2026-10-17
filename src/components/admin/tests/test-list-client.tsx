@@ -36,9 +36,9 @@ import type { ContentStatus } from "@/types/database";
 interface TestRow {
   id: string;
   name: string;
-  course: { id: string; name: string } | null;
+  course: { id: string; title: string } | null;
   question_count: number;
-  duration_min: number;
+  duration_minutes: number;
   status: string;
   max_attempts: number;
   created_at: string;
@@ -46,7 +46,7 @@ interface TestRow {
 
 interface CourseOption {
   id: string;
-  name: string;
+  title: string;
 }
 
 interface TestListClientProps {
@@ -119,7 +119,7 @@ export function TestListClient({ tests, courses }: TestListClientProps) {
           <option value="all">All Courses</option>
           {courses.map((c) => (
             <option key={c.id} value={c.id}>
-              {c.name}
+              {c.title}
             </option>
           ))}
         </select>
@@ -176,13 +176,13 @@ export function TestListClient({ tests, courses }: TestListClientProps) {
                     </Link>
                   </TableCell>
                   <TableCell className="hidden sm:table-cell text-muted-foreground">
-                    {test.course?.name || "—"}
+                    {test.course?.title || "—"}
                   </TableCell>
                   <TableCell className="text-center">
                     {test.question_count}
                   </TableCell>
                   <TableCell className="hidden md:table-cell text-center text-muted-foreground">
-                    {test.duration_min} min
+                    {test.duration_minutes} min
                   </TableCell>
                   <TableCell className="text-center">
                     <Badge

@@ -1,6 +1,7 @@
 "use server";
 
 import crypto from "crypto";
+import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { createServiceClient } from "@/lib/supabase/service";
 
@@ -72,18 +73,13 @@ export async function enrollFree(
       return { error: "Failed to enroll. Please try again." };
     }
 
-    const { data: courseData } = await service
-      .from("courses")
-      .select("student_count")
-      .eq("id", courseId)
-      .single();
+    await service.rpc("increment_student_count", {
+      p_course_id: courseId,
+    });
 
-    if (courseData) {
-      await service
-        .from("courses")
-        .update({ student_count: (courseData.student_count || 0) + 1 })
-        .eq("id", courseId);
-    }
+    revalidatePath(`/courses`);
+    revalidatePath("/dashboard");
+    revalidatePath("/dashboard/my-courses");
 
     return { data: { enrolled: true } };
   } catch {
@@ -255,18 +251,13 @@ export async function verifyPayment(paymentData: {
       return { error: "Failed to confirm enrollment. Please contact support." };
     }
 
-    const { data: courseData } = await service
-      .from("courses")
-      .select("student_count")
-      .eq("id", paymentData.courseId)
-      .single();
+    await service.rpc("increment_student_count", {
+      p_course_id: paymentData.courseId,
+    });
 
-    if (courseData) {
-      await service
-        .from("courses")
-        .update({ student_count: (courseData.student_count || 0) + 1 })
-        .eq("id", paymentData.courseId);
-    }
+    revalidatePath(`/courses`);
+    revalidatePath("/dashboard");
+    revalidatePath("/dashboard/my-courses");
 
     return { data: { enrolled: true } };
   } catch {

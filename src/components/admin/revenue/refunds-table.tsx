@@ -141,7 +141,7 @@ export function RefundsTable({ initialData, initialCount }: RefundsTableProps) {
                     {refund.order?.student?.full_name ?? "—"}
                   </TableCell>
                   <TableCell className="max-w-[140px] truncate">
-                    {refund.order?.course?.name ?? "—"}
+                    {refund.order?.course?.title ?? "—"}
                   </TableCell>
                   <TableCell className="text-right font-medium">
                     {formatINR(refund.amount)}

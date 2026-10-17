@@ -60,7 +60,7 @@ import {
 import type { Course, ContentType, ContentStatus } from "@/types/database";
 
 interface TreeViewProps {
-  courses: Pick<Course, "id" | "name" | "status">[];
+  courses: Pick<Course, "id" | "title" | "is_published">[];
 }
 
 export function TreeView({ courses }: TreeViewProps) {
@@ -346,7 +346,7 @@ export function TreeView({ courses }: TreeViewProps) {
             <SelectItem value="none">Select a course...</SelectItem>
             {courses.map((c) => (
               <SelectItem key={c.id} value={c.id}>
-                {c.name}
+                {c.title}
               </SelectItem>
             ))}
           </SelectContent>

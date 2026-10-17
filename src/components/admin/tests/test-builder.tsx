@@ -42,10 +42,11 @@ import { QuestionBankModal } from "./question-bank-modal";
 import { TestPreview } from "./test-preview";
 import { saveTest, publishTest } from "@/app/admin/(panel)/content/tests/actions";
 import type { QuestionType, QuestionBankItem } from "@/types/database";
+import type { Json } from "@/types/supabase";
 
 interface CourseOption {
   id: string;
-  name: string;
+  title: string;
 }
 
 interface TestBuilderProps {
@@ -56,11 +57,11 @@ interface TestBuilderProps {
       name: string;
       course_id: string;
       instructions: string;
-      duration_min: number;
+      duration_minutes: number;
       max_attempts: number;
-      pass_pct: number;
-      shuffle: boolean;
-      show_results: boolean;
+      pass_percentage: number;
+      shuffle_questions: boolean;
+      show_results_immediately: boolean;
       certificate_enabled: boolean;
       negative_marking: boolean;
     };
@@ -189,9 +190,10 @@ export function TestBuilder({ courses, initialTest }: TestBuilderProps) {
         markSaving(true);
         const gen = useTestBuilder.getState().saveGeneration;
         const status = preserveStatus ? currentStatusRef.current : ("draft" as const);
+        const { negative_marking: _, ...dbSettings } = settings;
         const payload = {
           id: testId || undefined,
-          ...settings,
+          ...dbSettings,
           status,
           questions: questions.map((q, i) => ({ ...q, weight: i + 1 })),
         };
@@ -228,9 +230,10 @@ export function TestBuilder({ courses, initialTest }: TestBuilderProps) {
     startTransition(async () => {
       markSaving(true);
       const gen = useTestBuilder.getState().saveGeneration;
+      const { negative_marking: _, ...dbSettings } = settings;
       const payload = {
         id: testId || undefined,
-        ...settings,
+        ...dbSettings,
         status: "published" as const,
         questions: questions.map((q, i) => ({ ...q, weight: i + 1 })),
       };
@@ -302,8 +305,8 @@ export function TestBuilder({ courses, initialTest }: TestBuilderProps) {
         id: generateId(),
         type: item.type,
         content: item.content,
-        options: item.options,
-        correct_answer: item.correct_answer,
+        options: item.options as Json | null,
+        correct_answer: item.correct_answer as Json | null,
         positive_marks: item.positive_marks,
         negative_marks: item.negative_marks,
         difficulty: item.difficulty,
@@ -508,7 +511,7 @@ export function TestBuilder({ courses, initialTest }: TestBuilderProps) {
         open={showPreview}
         onClose={() => setShowPreview(false)}
         testName={settings.name}
-        durationMin={settings.duration_min}
+        durationMin={settings.duration_minutes}
         questions={questions}
       />
     </div>

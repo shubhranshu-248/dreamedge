@@ -25,6 +25,7 @@ import { Subjective } from "./question-types/subjective";
 import { ImageBased } from "./question-types/image-based";
 import type { QuestionDraft } from "@/stores/test-builder";
 import type { QuestionType, Difficulty } from "@/types/database";
+import type { Json } from "@/types/supabase";
 
 interface QuestionCardProps {
   question: QuestionDraft;
@@ -37,7 +38,7 @@ interface QuestionCardProps {
   onDelete: () => void;
 }
 
-const typeColors: Record<QuestionType, string> = {
+const typeColors: Record<string, string> = {
   mcq_single: "bg-blue-500/10 text-blue-600 dark:text-blue-400",
   mcq_multiple: "bg-violet-500/10 text-violet-600 dark:text-violet-400",
   true_false: "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400",
@@ -47,7 +48,7 @@ const typeColors: Record<QuestionType, string> = {
   image_based: "bg-cyan-500/10 text-cyan-600 dark:text-cyan-400",
 };
 
-const typeLabels: Record<QuestionType, string> = {
+const typeLabels: Record<string, string> = {
   mcq_single: "MCQ (Single)",
   mcq_multiple: "MCQ (Multiple)",
   true_false: "True/False",
@@ -91,12 +92,12 @@ export function QuestionCard({
 
   function updateOptions(key: string, value: unknown) {
     onUpdate({
-      options: { ...(question.options || {}), [key]: value },
+      options: { ...((question.options as Record<string, unknown>) || {}), [key]: value } as unknown as Json,
     });
   }
 
   function renderAnswerArea() {
-    const opts = question.options || {};
+    const opts = (question.options || {}) as Record<string, unknown>;
 
     switch (question.type) {
       case "mcq_single":
@@ -131,7 +132,7 @@ export function QuestionCard({
         return (
           <TrueFalse
             correctAnswer={
-              (question.correct_answer as "true" | "false") ?? null
+              (String(question.correct_answer) as "true" | "false") ?? null
             }
             onChange={(a) => onUpdate({ correct_answer: a })}
             readOnly={!isEditing}
@@ -142,7 +143,7 @@ export function QuestionCard({
           <ShortAnswer
             answers={
               question.correct_answer
-                ? question.correct_answer.split(",").map((s) => s.trim())
+                ? String(question.correct_answer).split(",").map((s: string) => s.trim())
                 : [""]
             }
             onChange={(a) => onUpdate({ correct_answer: a.join(", ") })}
@@ -159,7 +160,7 @@ export function QuestionCard({
               ]
             }
             onChange={(pairs) =>
-              onUpdate({ options: { pairs }, correct_answer: "pairs" })
+              onUpdate({ options: { pairs } as unknown as Json, correct_answer: "pairs" })
             }
             readOnly={!isEditing}
           />
@@ -180,10 +181,10 @@ export function QuestionCard({
             answerData={(opts.answerData as Record<string, unknown>) || {}}
             onImageChange={(url) => onUpdate({ image_url: url })}
             onSubTypeChange={(st) =>
-              onUpdate({ options: { ...opts, subType: st } })
+              onUpdate({ options: { ...opts, subType: st } as unknown as Json })
             }
             onAnswerChange={(data) =>
-              onUpdate({ options: { ...opts, answerData: data } })
+              onUpdate({ options: { ...opts, answerData: data } as unknown as Json })
             }
             readOnly={!isEditing}
           />

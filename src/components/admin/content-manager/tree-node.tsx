@@ -31,7 +31,7 @@ import { Badge } from "@/components/ui/badge";
 import type { TreeNode as TreeNodeType, NodeKind } from "@/stores/content-tree";
 import type { ContentType } from "@/types/database";
 
-const contentTypeIcons: Record<ContentType, React.ElementType> = {
+const contentTypeIcons: Record<string, React.ElementType> = {
   video: Video,
   pdf: FileText,
   note: Notebook,

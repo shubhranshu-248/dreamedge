@@ -27,7 +27,7 @@ interface TestPreviewProps {
   questions: QuestionDraft[];
 }
 
-const typeLabels: Record<QuestionType, string> = {
+const typeLabels: Record<string, string> = {
   mcq_single: "MCQ (Single)",
   mcq_multiple: "MCQ (Multiple)",
   true_false: "True/False",
@@ -50,7 +50,7 @@ export function TestPreview({
   if (!q) return null;
 
   function renderStudentView() {
-    const opts = q.options || {};
+    const opts = (q.options || {}) as Record<string, unknown>;
 
     switch (q.type) {
       case "mcq_single": {

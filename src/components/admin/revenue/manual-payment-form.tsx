@@ -27,10 +27,9 @@ interface StudentOption {
 
 interface CourseOption {
   id: string;
-  name: string;
+  title: string;
   price: number;
-  discount_price: number | null;
-  validity_days: number;
+  original_price: number | null;
 }
 
 export function ManualPaymentForm() {
@@ -92,7 +91,7 @@ export function ManualPaymentForm() {
     setSelectedCourse(courseId);
     const course = courses.find((c) => c.id === courseId);
     if (course) {
-      setAmount(String(course.discount_price ?? course.price));
+      setAmount(String(course.price));
     }
   }
 
@@ -222,7 +221,7 @@ export function ManualPaymentForm() {
             <SelectContent>
               {courses.map((c) => (
                 <SelectItem key={c.id} value={c.id}>
-                  {c.name} — {formatINR(c.discount_price ?? c.price)}
+                  {c.title} — {formatINR(c.price)}
                 </SelectItem>
               ))}
             </SelectContent>

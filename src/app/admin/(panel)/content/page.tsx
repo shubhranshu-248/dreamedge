@@ -39,15 +39,11 @@ async function getCourses(params: SearchParams) {
     .range(offset, offset + PAGE_SIZE - 1);
 
   if (params.status && params.status !== "all") {
-    query = query.eq("status", params.status);
-  }
-
-  if (params.category && params.category !== "all") {
-    query = query.eq("category_id", params.category);
+    query = query.eq("is_published", params.status === "published");
   }
 
   if (params.q) {
-    query = query.ilike("name", `%${params.q}%`);
+    query = query.ilike("title", `%${params.q}%`);
   }
 
   const { data, count, error } = await query;

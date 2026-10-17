@@ -26,7 +26,6 @@ import {
   Mail,
   MapPin,
   Calendar,
-  Wallet,
   BookOpen,
   FileText,
   CreditCard,
@@ -214,13 +213,8 @@ export function StudentDetail({ studentId, onClose, onStatusChange }: StudentDet
                 <InfoRow icon={MapPin} label="City" value={student.city as string} />
                 <InfoRow icon={MapPin} label="State" value={student.state as string} />
                 <InfoRow icon={Calendar} label="Class" value={student.class as string} />
-                <InfoRow icon={BookOpen} label="Board" value={student.board as string} />
+                <InfoRow icon={BookOpen} label="School" value={student.school_name as string} />
                 <InfoRow icon={User} label="Referral Code" value={student.referral_code as string} />
-                <InfoRow
-                  icon={Wallet}
-                  label="Wallet Balance"
-                  value={formatCurrency(student.wallet_balance as number)}
-                />
               </TabsContent>
 
               {/* Courses Tab */}
@@ -230,7 +224,7 @@ export function StudentDetail({ studentId, onClose, onStatusChange }: StudentDet
                 ) : (
                   <div className="space-y-3">
                     {enrollments.map((e) => {
-                      const course = e.course as { name: string } | null;
+                      const course = e.course as { title: string } | null;
                       return (
                         <div
                           key={e.id as string}
@@ -238,7 +232,7 @@ export function StudentDetail({ studentId, onClose, onStatusChange }: StudentDet
                         >
                           <div className="flex items-center justify-between">
                             <p className="font-medium text-sm">
-                              {course?.name ?? "Unknown Course"}
+                              {course?.title ?? "Unknown Course"}
                             </p>
                             <Badge
                               variant="secondary"
@@ -312,14 +306,14 @@ export function StudentDetail({ studentId, onClose, onStatusChange }: StudentDet
                 ) : (
                   <div className="space-y-3">
                     {orders.map((o) => {
-                      const course = o.course as { name: string } | null;
+                      const course = o.course as { title: string } | null;
                       return (
                         <div
                           key={o.id as string}
                           className="rounded-lg border border-border p-3 space-y-1"
                         >
                           <div className="flex items-center justify-between">
-                            <p className="font-medium text-sm">{course?.name ?? "—"}</p>
+                            <p className="font-medium text-sm">{course?.title ?? "—"}</p>
                             <Badge
                               variant="secondary"
                               className={

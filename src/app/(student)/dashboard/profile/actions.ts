@@ -1,6 +1,7 @@
 "use server";
 
 import { createClient } from "@/lib/supabase/server";
+import { createServiceClient } from "@/lib/supabase/service";
 
 interface ActionResult<T = Record<string, unknown>> {
   data?: T;
@@ -37,7 +38,8 @@ export async function updateProfile(
     return { error: "You must be logged in." };
   }
 
-  const { error } = await supabase
+  const service = createServiceClient();
+  const { error } = await service
     .from("students")
     .update({
       full_name: fullName.trim(),

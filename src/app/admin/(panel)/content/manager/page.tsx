@@ -5,7 +5,7 @@ async function getCourses() {
   const supabase = await createClient();
   const { data } = await supabase
     .from("courses")
-    .select("id, name, status")
+    .select("id, title, is_published")
     .order("created_at", { ascending: false });
   return data || [];
 }

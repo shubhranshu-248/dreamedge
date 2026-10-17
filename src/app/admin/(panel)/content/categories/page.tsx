@@ -13,17 +13,8 @@ async function getCategoriesWithCounts() {
     return [];
   }
 
-  const counts = await Promise.all(
-    categories.map(async (cat) => {
-      const { count } = await supabase
-        .from("courses")
-        .select("id", { count: "exact", head: true })
-        .eq("category_id", cat.id);
-      return { ...cat, course_count: count || 0 };
-    })
-  );
-
-  return counts;
+  // category_id does not exist on courses table; return 0 counts for now
+  return categories.map((cat) => ({ ...cat, course_count: 0 }));
 }
 
 export default async function CategoriesPage() {

@@ -36,7 +36,7 @@ import {
 } from "@/app/admin/(panel)/content/tests/actions";
 import type { QuestionBankItem, QuestionType, Difficulty } from "@/types/database";
 
-const typeLabels: Record<QuestionType, string> = {
+const typeLabels: Record<string, string> = {
   mcq_single: "MCQ (Single)",
   mcq_multiple: "MCQ (Multiple)",
   true_false: "True/False",
@@ -46,7 +46,7 @@ const typeLabels: Record<QuestionType, string> = {
   image_based: "Image",
 };
 
-const typeColors: Record<QuestionType, string> = {
+const typeColors: Record<string, string> = {
   mcq_single: "bg-blue-500/10 text-blue-600 dark:text-blue-400",
   mcq_multiple: "bg-violet-500/10 text-violet-600 dark:text-violet-400",
   true_false: "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400",
@@ -62,11 +62,11 @@ interface QuestionBankClientProps {
 
 interface EditingQuestion {
   id?: string;
-  type: QuestionType;
+  type: string;
   content: string;
   positive_marks: number;
   negative_marks: number;
-  difficulty: Difficulty;
+  difficulty: string;
   topic_tag: string;
 }
 
@@ -250,7 +250,7 @@ export function QuestionBankClient({ questions }: QuestionBankClientProps) {
                     {q.topic_tag || "—"}
                   </TableCell>
                   <TableCell className="text-center text-muted-foreground">
-                    {q.usage_count}
+                    {q.used_count}
                   </TableCell>
                   <TableCell>
                     <div className="flex items-center gap-1">

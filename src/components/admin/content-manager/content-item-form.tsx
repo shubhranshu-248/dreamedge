@@ -22,7 +22,7 @@ import {
   uploadContentFile,
 } from "@/app/admin/(panel)/content/manager/actions";
 import { useContentTree } from "@/stores/content-tree";
-import type { ContentItem, ContentType } from "@/types/database";
+import type { ContentItem } from "@/types/database";
 
 export function ContentItemForm({ item }: { item: ContentItem }) {
   const [isPending, startTransition] = useTransition();

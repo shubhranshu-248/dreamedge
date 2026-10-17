@@ -5,7 +5,7 @@ import {
   BookOpen,
   CheckCircle,
   Clock,
-  Trophy,
+  TrendingUp,
   ArrowRight,
   Search,
   UserCircle,
@@ -149,8 +149,8 @@ export function DashboardContent({
           value={stats.hoursLearned}
         />
         <StatCard
-          icon={Trophy}
-          label="Avg. Score"
+          icon={TrendingUp}
+          label="Avg. Progress"
           value={`${stats.avgScore}%`}
         />
       </div>

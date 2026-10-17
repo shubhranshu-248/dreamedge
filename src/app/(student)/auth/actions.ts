@@ -86,7 +86,7 @@ export async function registerStudent(
     .single();
 
   if (trialSetting?.value) {
-    const days = parseInt(trialSetting.value, 10);
+    const days = parseInt(String(trialSetting.value), 10);
     if (days > 0) {
       const expires = new Date();
       expires.setDate(expires.getDate() + days);
@@ -94,7 +94,7 @@ export async function registerStudent(
     }
   }
 
-  const { error: insertError } = await supabase.from("students").insert({
+  const { error: insertError } = await service.from("students").insert({
     user_id: userId,
     full_name: fullName.trim(),
     email: email.toLowerCase().trim(),

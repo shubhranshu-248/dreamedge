@@ -73,11 +73,11 @@ export async function getDashboardKpis(role: UserRole): Promise<DashboardKpis> {
     supabase
       .from("courses")
       .select("id", { count: "exact", head: true })
-      .eq("status", "published"),
+      .eq("is_published", true),
     supabase
       .from("courses")
       .select("id", { count: "exact", head: true })
-      .eq("status", "draft"),
+      .eq("is_published", false),
     canViewFinance
       ? supabase.rpc("get_revenue_stats", {
           start_date: lastMonth,
@@ -217,7 +217,7 @@ export async function getRecentActivity(
 export interface CoursePerformance {
   id: string;
   name: string;
-  status: string;
+  is_published: boolean;
   enrollments: number;
   revenue: number | null;
   completionRate: number | null;
@@ -227,15 +227,15 @@ export async function getTopCourses(role: UserRole, limit = 5): Promise<CoursePe
   const supabase = await createClient();
   const canViewFinance = FINANCE_ROLES.includes(role);
 
-  const { data, error } = await supabase.rpc("get_top_courses", { course_limit: limit });
+  const { data, error } = await supabase.rpc("get_top_courses", { result_limit: limit });
   logError("top courses", error);
 
   const rows = (data ?? []) as {
     id: string;
-    name: string;
+    title: string;
     slug: string;
     thumbnail_url: string | null;
-    status: string;
+    is_published: boolean;
     price: number;
     enrollment_count: number;
     total_revenue: number;
@@ -253,8 +253,8 @@ export async function getTopCourses(role: UserRole, limit = 5): Promise<CoursePe
 
     return {
       id: course.id,
-      name: course.name,
-      status: course.status,
+      name: course.title,
+      is_published: course.is_published,
       enrollments: course.enrollment_count,
       revenue: canViewFinance ? course.total_revenue : null,
       completionRate: possible > 0 ? Math.min(100, (completed / possible) * 100) : null,

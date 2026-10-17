@@ -138,7 +138,7 @@ export function InvoicesTable({ initialData, initialCount }: InvoicesTableProps)
                     {inv.student?.full_name ?? "—"}
                   </TableCell>
                   <TableCell className="max-w-[160px] truncate">
-                    {inv.course?.name ?? "—"}
+                    {inv.course?.title ?? "—"}
                   </TableCell>
                   <TableCell className="text-right font-medium">
                     {formatINR(inv.final_amount)}

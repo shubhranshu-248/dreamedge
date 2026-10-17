@@ -38,25 +38,19 @@ export async function createCourse(formData: FormData) {
     const values = parsed.data;
     let slug = values.slug || toSlug(values.name);
 
-    const meta: Record<string, string> = {};
-    if (values.meta_title) meta.title = values.meta_title;
-    if (values.meta_description) meta.description = values.meta_description;
-    if (values.preview_video_url) meta.preview_video_url = values.preview_video_url;
-
     const row = {
-      name: values.name,
+      title: values.name,
       slug,
       description: values.description || null,
-      short_description: values.short_description || null,
-      category_id: values.category_id || null,
-      language: values.language,
+      long_description: values.short_description || null,
       price: values.price,
-      discount_price: values.discount_price != null ? values.discount_price : null,
-      validity_days: values.validity_days,
+      original_price: values.discount_price != null ? values.discount_price : null,
       is_featured: values.is_featured,
       difficulty: values.difficulty || null,
-      status: values.status,
-      meta: Object.keys(meta).length > 0 ? meta : null,
+      is_published: values.status === "published",
+      meta_title: values.meta_title || null,
+      meta_description: values.meta_description || null,
+      preview_video_url: values.preview_video_url || null,
     };
 
     let { data, error } = await supabase
@@ -113,27 +107,21 @@ export async function updateCourse(id: string, formData: FormData) {
 
     const values = parsed.data;
 
-    const meta: Record<string, string> = {};
-    if (values.meta_title) meta.title = values.meta_title;
-    if (values.meta_description) meta.description = values.meta_description;
-    if (values.preview_video_url) meta.preview_video_url = values.preview_video_url;
-
     const { error } = await supabase
       .from("courses")
       .update({
-        name: values.name,
+        title: values.name,
         slug: values.slug,
         description: values.description || null,
-        short_description: values.short_description || null,
-        category_id: values.category_id || null,
-        language: values.language,
+        long_description: values.short_description || null,
         price: values.price,
-        discount_price: values.discount_price != null ? values.discount_price : null,
-        validity_days: values.validity_days,
+        original_price: values.discount_price != null ? values.discount_price : null,
         is_featured: values.is_featured,
         difficulty: values.difficulty || null,
-        status: values.status,
-        meta: Object.keys(meta).length > 0 ? meta : null,
+        is_published: values.status === "published",
+        meta_title: values.meta_title || null,
+        meta_description: values.meta_description || null,
+        preview_video_url: values.preview_video_url || null,
         updated_at: new Date().toISOString(),
       })
       .eq("id", id);
@@ -215,20 +203,19 @@ export async function duplicateCourse(id: string) {
     const { data, error } = await supabase
       .from("courses")
       .insert({
-        name: `${original.name} (Copy)`,
+        title: `${original.title} (Copy)`,
         slug: newSlug,
         description: original.description,
-        short_description: original.short_description,
-        category_id: original.category_id,
-        language: original.language,
+        long_description: original.long_description,
         price: original.price,
-        discount_price: original.discount_price,
-        validity_days: original.validity_days,
+        original_price: original.original_price,
         is_featured: false,
         difficulty: original.difficulty,
-        status: "draft" as const,
-        meta: original.meta,
+        is_published: false,
         thumbnail_url: original.thumbnail_url,
+        class: original.class,
+        subject: original.subject,
+        teacher_name: original.teacher_name,
       })
       .select("id")
       .single();
@@ -264,7 +251,10 @@ export async function toggleCourseStatus(
 
     const { error } = await supabase
       .from("courses")
-      .update({ status: newStatus, updated_at: new Date().toISOString() })
+      .update({
+        is_published: newStatus === "published",
+        updated_at: new Date().toISOString(),
+      })
       .eq("id", id);
 
     if (error) {
@@ -371,8 +361,10 @@ export async function createCategory(formData: FormData) {
       .from("course_categories")
       .select("id", { count: "exact", head: true });
 
+    const catSlug = toSlug(parsed.data.name);
     const { error } = await supabase.from("course_categories").insert({
       name: parsed.data.name,
+      slug: catSlug,
       weight: (count ?? 0) + 1,
     });
 
@@ -425,17 +417,6 @@ export async function deleteCategory(id: string) {
   try {
     await assertAdmin(["super_admin"]);
     const supabase = await createClient();
-
-    const { count } = await supabase
-      .from("courses")
-      .select("id", { count: "exact", head: true })
-      .eq("category_id", id);
-
-    if (count && count > 0) {
-      return {
-        error: `Cannot delete: ${count} course${count > 1 ? "s" : ""} use this category`,
-      };
-    }
 
     const { error } = await supabase.from("course_categories").delete().eq("id", id);
 

@@ -30,7 +30,7 @@ export async function fetchStudents(filters: StudentFilters = {}) {
 
     let query = supabase
       .from("students")
-      .select("id, full_name, email, phone, avatar_url, class, board, city, status, created_at, enrollments(id)", { count: "exact" });
+      .select("id, full_name, email, phone, avatar_url, class, city, is_active, created_at, enrollments(id)", { count: "exact" });
 
     if (filters.search) {
       const safe = sanitizeSearch(filters.search);
@@ -42,7 +42,11 @@ export async function fetchStudents(filters: StudentFilters = {}) {
     }
 
     if (filters.status && filters.status !== "all") {
-      query = query.eq("status", filters.status);
+      if (filters.status === "active") {
+        query = query.eq("is_active", true);
+      } else {
+        query = query.eq("is_active", false);
+      }
     }
 
     if (filters.city) {
@@ -84,6 +88,8 @@ export async function fetchStudents(filters: StudentFilters = {}) {
 
     const students = (data ?? []).map((s: Record<string, unknown>) => ({
       ...s,
+      status: s.is_active === true ? "active" : "inactive",
+      is_active: undefined,
       enrollment_count: Array.isArray(s.enrollments)
         ? s.enrollments.length
         : 0,
@@ -104,7 +110,7 @@ export async function fetchStudentDetail(studentId: string) {
 
     const { data: student, error } = await supabase
       .from("students")
-      .select("id, user_id, full_name, email, phone, avatar_url, class, board, city, state, school, status, parent_name, parent_phone, address, referral_code, wallet_balance, created_at, updated_at")
+      .select("id, user_id, full_name, email, phone, avatar_url, class, school_name, city, state, is_active, referral_code, created_at, updated_at")
       .eq("id", studentId)
       .single();
 
@@ -113,10 +119,15 @@ export async function fetchStudentDetail(studentId: string) {
       return { error: "Something went wrong. Please try again." };
     }
 
+    const studentRecord = {
+      ...student,
+      status: student.is_active === true ? "active" : "inactive",
+    } as Record<string, unknown>;
+
     const [enrollments, testAttempts, orders, auditLog] = await Promise.all([
       supabase
         .from("enrollments")
-        .select("*, course:courses(id, name)")
+        .select("*, course:courses(id, title)")
         .eq("student_id", studentId)
         .order("purchased_at", { ascending: false }),
       supabase
@@ -127,7 +138,7 @@ export async function fetchStudentDetail(studentId: string) {
         .limit(50),
       supabase
         .from("orders")
-        .select("*, course:courses(name)")
+        .select("*, course:courses(title)")
         .eq("student_id", studentId)
         .order("created_at", { ascending: false }),
       supabase
@@ -138,12 +149,22 @@ export async function fetchStudentDetail(studentId: string) {
         .limit(30),
     ]);
 
+    // Map course.title → course.name for component compatibility
+    const mappedEnrollments = (enrollments.data ?? []).map((e) => {
+      const course = e.course as { id: string; title: string } | null;
+      return { ...e, course: course ? { id: course.id, name: course.title } : null };
+    });
+    const mappedOrders = (orders.data ?? []).map((o) => {
+      const course = o.course as { title: string } | null;
+      return { ...o, course: course ? { name: course.title } : null };
+    });
+
     return {
       data: {
-        student,
-        enrollments: enrollments.data ?? [],
+        student: studentRecord,
+        enrollments: mappedEnrollments,
         testAttempts: testAttempts.data ?? [],
-        orders: orders.data ?? [],
+        orders: mappedOrders,
         auditLog: auditLog.data ?? [],
       },
     };
@@ -163,7 +184,7 @@ export async function updateStudentStatus(
 
     const { error } = await supabase
       .from("students")
-      .update({ status })
+      .update({ is_active: status === "active" })
       .eq("id", studentId);
 
     if (error) {
@@ -189,7 +210,7 @@ export async function bulkUpdateStudentStatus(
 
     const { error } = await supabase
       .from("students")
-      .update({ status })
+      .update({ is_active: status === "active" })
       .in("id", studentIds);
 
     if (error) {
@@ -214,8 +235,8 @@ export async function fetchStudentAnalytics() {
       { data: students },
       { data: enrollments },
     ] = await Promise.all([
-      supabase.from("students").select("id, status, city, created_at"),
-      supabase.from("enrollments").select("course_id, courses(name)"),
+      supabase.from("students").select("id, is_active, city, created_at"),
+      supabase.from("enrollments").select("course_id, courses(title)"),
     ]);
 
     const statusDist: Record<string, number> = { active: 0, inactive: 0, blocked: 0 };
@@ -223,7 +244,7 @@ export async function fetchStudentAnalytics() {
     const monthlyGrowth: Record<string, number> = {};
 
     (students ?? []).forEach((s: Record<string, unknown>) => {
-      const status = s.status as string;
+      const status = s.is_active === true ? "active" : "inactive";
       statusDist[status] = (statusDist[status] || 0) + 1;
 
       const city = (s.city as string) || "Unknown";
@@ -235,8 +256,8 @@ export async function fetchStudentAnalytics() {
 
     const courseDist: Record<string, number> = {};
     (enrollments ?? []).forEach((e: Record<string, unknown>) => {
-      const course = e.courses as { name: string } | null;
-      const name = course?.name ?? "Unknown";
+      const course = e.courses as { title: string } | null;
+      const name = course?.title ?? "Unknown";
       courseDist[name] = (courseDist[name] || 0) + 1;
     });
 
@@ -271,10 +292,10 @@ export async function fetchCoursesList() {
     const supabase = await createClient();
     const { data } = await supabase
       .from("courses")
-      .select("id, name")
-      .eq("status", "published")
-      .order("name");
-    return data ?? [];
+      .select("id, title")
+      .eq("is_published", true)
+      .order("title");
+    return (data ?? []).map((c) => ({ id: c.id, name: c.title }));
   } catch (err) {
     console.error("fetchCoursesList failed:", err);
     return [];
@@ -414,11 +435,11 @@ export async function convertLeadToStudent(leadId: string) {
     if (fetchError || !lead) return { error: "Lead not found" };
 
     const { error: insertError } = await supabase.from("students").insert({
-      full_name: lead.name,
+      user_id: crypto.randomUUID(),
+      full_name: lead.name ?? "",
       phone: lead.phone,
-      email: lead.email,
-      status: "active",
-      wallet_balance: 0,
+      email: lead.email ?? "",
+      is_active: true,
     });
 
     if (insertError) {
@@ -449,14 +470,22 @@ export async function fetchTestimonials() {
 
     const { data, error } = await supabase
       .from("testimonials")
-      .select("id, student_name, content, video_url, type, year, course_name, marks_or_rank, photo_url, is_topper, is_visible, weight, created_at")
+      .select("id, student_name, student_photo_url, content, video_url, rating, class, type, year, is_visible, weight, created_at")
       .order("weight", { ascending: true });
 
     if (error) {
       console.error("fetchTestimonials failed:", error);
       return { error: "Something went wrong. Please try again." };
     }
-    return { data: data ?? [] };
+    // Map DB columns to match Testimonial interface from database.ts
+    const mapped = (data ?? []).map((t) => ({
+      ...t,
+      photo_url: t.student_photo_url,
+      course_name: null,
+      marks_or_rank: null,
+      is_topper: false,
+    }));
+    return { data: mapped };
   } catch (err) {
     console.error("fetchTestimonials failed:", err);
     return { error: "You don't have permission to perform this action." };
@@ -475,15 +504,14 @@ export async function createTestimonial(formData: FormData) {
       .from("testimonials")
       .select("id", { count: "exact", head: true });
 
+    const yearVal = formData.get("year") as string;
+
     const { error } = await supabase.from("testimonials").insert({
       student_name: studentName.trim(),
       content: (formData.get("content") as string)?.trim() || null,
       video_url: (formData.get("video_url") as string)?.trim() || null,
-      type: formData.get("type") || "text",
-      year: parseInt(formData.get("year") as string) || new Date().getFullYear(),
-      course_name: (formData.get("course_name") as string)?.trim() || null,
-      marks_or_rank: (formData.get("marks_or_rank") as string)?.trim() || null,
-      is_topper: formData.get("is_topper") === "true",
+      type: (formData.get("type") as string) || "text",
+      year: yearVal?.trim() || String(new Date().getFullYear()),
       is_visible: true,
       weight: (count ?? 0) + 1,
     });
@@ -506,17 +534,16 @@ export async function updateTestimonial(id: string, formData: FormData) {
     await assertAdmin(["super_admin", "support_staff"]);
     const supabase = await createClient();
 
+    const yearVal = formData.get("year") as string;
+
     const { error } = await supabase
       .from("testimonials")
       .update({
         student_name: (formData.get("student_name") as string)?.trim(),
         content: (formData.get("content") as string)?.trim() || null,
         video_url: (formData.get("video_url") as string)?.trim() || null,
-        type: formData.get("type") || "text",
-        year: parseInt(formData.get("year") as string) || new Date().getFullYear(),
-        course_name: (formData.get("course_name") as string)?.trim() || null,
-        marks_or_rank: (formData.get("marks_or_rank") as string)?.trim() || null,
-        is_topper: formData.get("is_topper") === "true",
+        type: (formData.get("type") as string) || "text",
+        year: yearVal?.trim() || String(new Date().getFullYear()),
       })
       .eq("id", id);
 

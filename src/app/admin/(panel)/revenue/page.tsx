@@ -51,9 +51,9 @@ async function RevenueContent() {
         const supabase = await createClient();
         return supabase
           .from("courses")
-          .select("id, name")
-          .eq("status", "published")
-          .order("name");
+          .select("id, title")
+          .eq("is_published", true)
+          .order("title");
       })(),
     ]);
 
@@ -67,7 +67,10 @@ async function RevenueContent() {
       initialInvoicesCount={invoicesResult.count}
       initialReferralCodes={referralResult.data ?? []}
       initialReferralCodesCount={referralResult.count}
-      courses={coursesResult.data ?? []}
+      courses={(coursesResult.data ?? []).map((c) => ({
+        id: c.id,
+        name: (c as unknown as { title: string }).title,
+      }))}
     />
   );
 }
