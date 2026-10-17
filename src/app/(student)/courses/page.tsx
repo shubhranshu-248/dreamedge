@@ -31,7 +31,16 @@ export default async function CoursesPage({ searchParams }: PageProps) {
       .order("created_at", { ascending: false });
 
     if (data) {
-      courses = data as unknown as Course[];
+      courses = (data as any[]).map((d) => ({
+        ...d,
+        price: Number(d.price ?? 0),
+        original_price: d.original_price != null ? Number(d.original_price) : null,
+        student_count: Number(d.student_count ?? 0),
+        rating_avg: d.rating_avg != null ? Number(d.rating_avg) : null,
+        rating_count: Number(d.rating_count ?? 0),
+        total_lessons: Number(d.total_lessons ?? 0),
+        duration_hours: d.duration_hours != null ? Number(d.duration_hours) : null,
+      })) as Course[];
       classes = [...new Set(courses.map((c) => c.class).filter(Boolean))] as string[];
       subjects = [...new Set(courses.map((c) => c.subject).filter(Boolean))] as string[];
     }

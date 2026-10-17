@@ -49,7 +49,16 @@ export default async function CourseDetailPage({ params }: PageProps) {
       .single();
 
     if (data) {
-      course = data as unknown as Course;
+      course = {
+        ...data,
+        price: Number(data.price ?? 0),
+        original_price: data.original_price != null ? Number(data.original_price) : null,
+        student_count: Number(data.student_count ?? 0),
+        rating_avg: data.rating_avg != null ? Number(data.rating_avg) : null,
+        rating_count: Number(data.rating_count ?? 0),
+        total_lessons: Number(data.total_lessons ?? 0),
+        duration_hours: data.duration_hours != null ? Number(data.duration_hours) : null,
+      } as unknown as Course;
     }
 
     if (course) {

@@ -38,15 +38,16 @@ export async function enrollFree(
 
     const service = createServiceClient();
 
-    const { data: course } = await service
+    const { data: course, error: courseError } = await service
       .from("courses")
       .select("id, price, is_published")
       .eq("id", courseId)
       .single();
 
+    if (courseError) return { error: "Course not found" };
     if (!course) return { error: "Course not found" };
     if (!course.is_published) return { error: "Course is not available" };
-    if (course.price !== 0) return { error: "This is a paid course" };
+    if (Number(course.price) !== 0) return { error: "This is a paid course" };
 
     const { data: existing } = await service
       .from("enrollments")
@@ -57,15 +58,19 @@ export async function enrollFree(
 
     if (existing) return { error: "Already enrolled in this course" };
 
+    const validUntil = new Date();
+    validUntil.setFullYear(validUntil.getFullYear() + 1);
+
     const { error: insertError } = await service.from("enrollments").insert({
       student_id: student.id,
       course_id: courseId,
       status: "active",
-      payment_status: "free",
-      payment_amount: 0,
+      valid_until: validUntil.toISOString(),
     });
 
-    if (insertError) return { error: "Failed to enroll. Please try again." };
+    if (insertError) {
+      return { error: "Failed to enroll. Please try again." };
+    }
 
     const { data: courseData } = await service
       .from("courses")
@@ -119,19 +124,19 @@ export async function createPaymentOrder(
 
     if (!course) return { error: "Course not found" };
     if (!course.is_published) return { error: "Course is not available" };
-    if (course.price <= 0) return { error: "This course is free" };
+    if (Number(course.price) <= 0) return { error: "This course is free" };
 
     const { data: existing } = await service
       .from("enrollments")
       .select("id")
       .eq("student_id", student.id)
       .eq("course_id", courseId)
-      .eq("payment_status", "paid")
+      .eq("status", "active")
       .maybeSingle();
 
     if (existing) return { error: "Already enrolled in this course" };
 
-    const amountInPaise = Math.round(course.price * 100);
+    const amountInPaise = Math.round(Number(course.price) * 100);
     const receipt = `enroll_${student.id.slice(0, 8)}_${courseId.slice(0, 8)}`;
 
     const credentials = Buffer.from(`${keyId}:${keySecret}`).toString("base64");
@@ -159,7 +164,9 @@ export async function createPaymentOrder(
 
     const order = await response.json();
 
-    // Upsert a pending enrollment (handles re-attempts)
+    const paidValidUntil = new Date();
+    paidValidUntil.setFullYear(paidValidUntil.getFullYear() + 1);
+
     await service
       .from("enrollments")
       .upsert(
@@ -167,9 +174,7 @@ export async function createPaymentOrder(
           student_id: student.id,
           course_id: courseId,
           status: "active",
-          payment_status: "pending",
-          payment_order_id: order.id,
-          payment_amount: course.price,
+          valid_until: paidValidUntil.toISOString(),
         },
         { onConflict: "student_id,course_id" }
       );
@@ -234,12 +239,10 @@ export async function verifyPayment(paymentData: {
     const { error: updateError } = await service
       .from("enrollments")
       .update({
-        payment_status: "paid",
-        payment_id: paymentData.razorpay_payment_id,
-        payment_method: paymentMethod,
-        purchased_at: new Date().toISOString(),
+        status: "active",
       })
-      .eq("payment_order_id", paymentData.razorpay_order_id);
+      .eq("student_id", auth.student.id)
+      .eq("course_id", paymentData.courseId);
 
     if (updateError) {
       return { error: "Failed to confirm enrollment. Please contact support." };

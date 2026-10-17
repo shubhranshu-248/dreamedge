@@ -22,6 +22,7 @@ import { Badge } from "@/components/ui/badge";
 import { formatINR } from "@/lib/format";
 import { formatRelativeTime } from "@/lib/format";
 import { loadRazorpay } from "@/lib/razorpay";
+import { useAuth } from "@/lib/hooks/use-auth";
 import {
   enrollFree,
   createPaymentOrder,
@@ -42,6 +43,7 @@ const DIFFICULTY_COLORS: Record<string, string> = {
 
 export function CourseDetailContent({ course, isEnrolled = false }: CourseDetailContentProps) {
   const router = useRouter();
+  const { user, isLoading: authLoading } = useAuth();
   const [expanded, setExpanded] = useState(false);
   const [enrolling, setEnrolling] = useState(false);
 
@@ -181,6 +183,17 @@ export function CourseDetailContent({ course, isEnrolled = false }: CourseDetail
       );
     }
 
+    if (!authLoading && !user) {
+      return (
+        <Link
+          href="/login"
+          className="mt-4 flex w-full items-center justify-center gap-2 rounded-lg bg-brand-orange py-3 text-sm font-semibold text-white transition-colors hover:bg-brand-orange-dark"
+        >
+          Login to Enroll
+        </Link>
+      );
+    }
+
     const label =
       course.price === 0
         ? "Enroll Now — Free"
@@ -189,7 +202,7 @@ export function CourseDetailContent({ course, isEnrolled = false }: CourseDetail
     return (
       <button
         onClick={handleEnroll}
-        disabled={enrolling}
+        disabled={enrolling || authLoading}
         className="mt-4 flex w-full items-center justify-center gap-2 rounded-lg bg-brand-orange py-3 text-sm font-semibold text-white transition-colors hover:bg-brand-orange-dark disabled:opacity-70"
       >
         {enrolling ? (
