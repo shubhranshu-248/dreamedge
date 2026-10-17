@@ -150,8 +150,8 @@ export function AdminShell({
           <span className="text-white font-bold text-xs">DE</span>
         </div>
         <div className="flex-1 min-w-0">
-          <p className="text-sm font-semibold truncate">Dream Edge</p>
-          <p className="text-xs text-muted-foreground">Admin</p>
+          <p className="text-base font-semibold truncate">Dream Edge</p>
+          <p className="text-sm text-muted-foreground">Admin</p>
         </div>
       </div>
 
@@ -165,7 +165,7 @@ export function AdminShell({
               <Link
                 href={item.href}
                 onClick={() => setSidebarOpen(false)}
-                className={`flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
+                className={`flex items-center gap-3 rounded-lg px-3 py-2 text-base font-medium transition-colors ${
                   active
                     ? "bg-brand-orange/10 text-brand-orange"
                     : "text-muted-foreground hover:bg-accent hover:text-foreground"
@@ -184,7 +184,7 @@ export function AdminShell({
                         key={child.href}
                         href={child.href}
                         onClick={() => setSidebarOpen(false)}
-                        className={`flex items-center gap-2 rounded-md px-2 py-1.5 text-xs font-medium transition-colors ${
+                        className={`flex items-center gap-2 rounded-md px-2 py-1.5 text-sm font-medium transition-colors ${
                           childActive
                             ? "text-brand-orange"
                             : "text-muted-foreground hover:text-foreground"

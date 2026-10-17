@@ -22,17 +22,17 @@ async function fetchEnrolledCourses(studentId: string) {
 
     if (!enrollments || enrollments.length === 0) return [];
 
-    const courseIds = enrollments.map((e: any) => e.course_id);
+    const courseIds = enrollments.map((e) => e.course_id);
     const { data: courses } = await supabase
       .from("courses")
       .select("id, title, slug, thumbnail_url, class")
       .in("id", courseIds);
 
     const courseMap = new Map(
-      (courses ?? []).map((c: any) => [c.id, c])
+      (courses ?? []).map((c) => [c.id, c])
     );
 
-    return enrollments.map((e: any) => ({
+    return enrollments.map((e) => ({
       id: e.id,
       purchased_at: e.purchased_at,
       valid_until: e.valid_until,
@@ -70,7 +70,7 @@ async function fetchHoursLearned(completedLessonIds: string[]) {
     if (!lessons) return 0;
 
     const totalMinutes = lessons.reduce(
-      (sum: number, l: any) => sum + (l.duration_minutes ?? 0),
+      (sum, l) => sum + (l.duration_minutes ?? 0),
       0
     );
     return Math.round((totalMinutes / 60) * 10) / 10;
@@ -88,18 +88,18 @@ export default async function DashboardPage() {
   ]);
 
   const completedProgress = progress.filter(
-    (p: any) => p.status === "completed"
+    (p) => p.status === "completed"
   );
   const completedLessons = completedProgress.length;
 
-  const completedLessonIds = completedProgress.map((p: any) => p.lesson_id);
+  const completedLessonIds = completedProgress.map((p) => p.lesson_id);
   const hoursLearned = await fetchHoursLearned(completedLessonIds);
 
-  const avgScore =
+  const avgProgress =
     progress.length > 0
       ? Math.round(
           progress.reduce(
-            (sum: number, p: any) => sum + (p.progress_pct ?? 0),
+            (sum, p) => sum + (p.progress_pct ?? 0),
             0
           ) / progress.length
         )
@@ -113,7 +113,7 @@ export default async function DashboardPage() {
         enrolledCourses: enrollments.length,
         completedLessons,
         hoursLearned,
-        avgScore,
+        avgProgress,
       }}
     />
   );

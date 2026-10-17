@@ -22,12 +22,12 @@ interface DashboardStats {
   enrolledCourses: number;
   completedLessons: number;
   hoursLearned: number;
-  avgScore: number;
+  avgProgress: number;
 }
 
 interface Enrollment {
   id: string;
-  purchased_at: string;
+  purchased_at: string | null;
   valid_until: string | null;
   status: string;
   course: {
@@ -151,7 +151,7 @@ export function DashboardContent({
         <StatCard
           icon={TrendingUp}
           label="Avg. Progress"
-          value={`${stats.avgScore}%`}
+          value={`${stats.avgProgress}%`}
         />
       </div>
 
