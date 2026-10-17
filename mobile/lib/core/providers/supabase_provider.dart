@@ -10,9 +10,12 @@ final authStateProvider = StreamProvider<AuthState>((ref) {
 });
 
 final currentSessionProvider = Provider<Session?>((ref) {
-  return ref.watch(supabaseClientProvider).auth.currentSession;
+  final authState = ref.watch(authStateProvider);
+  return authState.whenData((state) => state.session).valueOrNull;
 });
 
 final currentUserProvider = Provider<User?>((ref) {
+  final session = ref.watch(currentSessionProvider);
+  if (session == null) return null;
   return ref.watch(supabaseClientProvider).auth.currentUser;
 });
