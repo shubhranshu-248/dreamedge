@@ -109,7 +109,7 @@ export function Navbar() {
                   My Dashboard
                 </DropdownMenuItem>
                 <DropdownMenuItem
-                  render={<Link href="/dashboard" />}
+                  render={<Link href="/courses" />}
                   className="flex items-center gap-2"
                 >
                   <BookOpen className="h-4 w-4" />
