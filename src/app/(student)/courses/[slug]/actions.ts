@@ -174,6 +174,9 @@ export async function createPaymentOrder(
           student_id: student.id,
           course_id: courseId,
           status: "active",
+          payment_status: "pending",
+          payment_order_id: order.id,
+          payment_amount: Number(course.price),
           valid_until: paidValidUntil.toISOString(),
         },
         { onConflict: "student_id,course_id" }
@@ -240,6 +243,10 @@ export async function verifyPayment(paymentData: {
       .from("enrollments")
       .update({
         status: "active",
+        payment_status: "paid",
+        payment_id: paymentData.razorpay_payment_id,
+        payment_method: paymentMethod,
+        purchased_at: new Date().toISOString(),
       })
       .eq("student_id", auth.student.id)
       .eq("course_id", paymentData.courseId);
