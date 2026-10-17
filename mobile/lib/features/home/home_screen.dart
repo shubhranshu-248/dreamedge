@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../core/providers/course_provider.dart';
+import '../../core/providers/student_provider.dart';
 import '../../core/providers/supabase_provider.dart';
 import '../../shared/theme/colors.dart';
 import '../../shared/theme/typography.dart';
@@ -18,9 +19,13 @@ class HomeScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final studentAsync = ref.watch(currentStudentProvider);
     final user = ref.watch(currentUserProvider);
-    final displayName =
-        user?.userMetadata?['full_name'] as String? ?? 'Student';
+    final displayName = studentAsync.whenOrNull(
+          data: (student) => student?.fullName.split(' ').first,
+        ) ??
+        (user?.userMetadata?['full_name'] as String?)?.split(' ').first ??
+        'there';
     final allCourses = ref.watch(allCoursesProvider);
 
     return Scaffold(

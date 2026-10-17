@@ -31,10 +31,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 
     try {
       await ref.read(authServiceProvider).login(
-            _emailController.text,
+            _emailController.text.trim(),
             _passwordController.text,
           );
-      if (mounted) context.go('/');
     } catch (e) {
       if (mounted) {
         context.showSnackBar(

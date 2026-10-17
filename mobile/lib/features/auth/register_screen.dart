@@ -37,15 +37,20 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
 
     try {
       await ref.read(authServiceProvider).register(
-            email: _emailController.text,
+            email: _emailController.text.trim(),
             password: _passwordController.text,
-            fullName: _nameController.text,
-            phone: _phoneController.text,
+            fullName: _nameController.text.trim(),
+            phone: _phoneController.text.trim().isEmpty
+                ? null
+                : _phoneController.text.trim(),
             studentClass: _selectedClass,
-            referralCode: _referralController.text,
+            referralCode: _referralController.text.trim().isEmpty
+                ? null
+                : _referralController.text.trim(),
           );
       if (mounted) {
-        context.showSnackBar('Account created! Please check your email to verify.');
+        context.showSnackBar(
+            'Account created! Please check your email to verify.');
         context.go('/login');
       }
     } catch (e) {

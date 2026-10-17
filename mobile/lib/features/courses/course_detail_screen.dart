@@ -7,6 +7,8 @@ import '../../core/models/course.dart';
 import '../../core/models/subject.dart';
 import '../../core/providers/auth_provider.dart';
 import '../../core/providers/course_provider.dart';
+import '../../core/providers/enrollment_provider.dart';
+import '../../core/utils/extensions.dart';
 import '../../shared/theme/colors.dart';
 import '../../shared/theme/typography.dart';
 import '../../shared/widgets/shimmer_box.dart';
@@ -104,18 +106,9 @@ class CourseDetailScreen extends ConsumerWidget {
                     const SizedBox(height: 20),
                     _buildPriceSection(course),
                     const SizedBox(height: 20),
-                    SizedBox(
-                      width: double.infinity,
-                      child: ElevatedButton(
-                        onPressed: () {
-                          if (!isAuthenticated) {
-                            context.go('/login');
-                          }
-                        },
-                        child: Text(
-                          isAuthenticated ? 'Enroll Now' : 'Login to Enroll',
-                        ),
-                      ),
+                    _EnrollButton(
+                      courseId: courseId,
+                      isAuthenticated: isAuthenticated,
                     ),
                     if (course.description != null &&
                         course.description!.isNotEmpty) ...[
@@ -283,6 +276,122 @@ class CourseDetailScreen extends ConsumerWidget {
             ),
           ),
       ],
+    );
+  }
+}
+
+class _EnrollButton extends ConsumerStatefulWidget {
+  final String courseId;
+  final bool isAuthenticated;
+
+  const _EnrollButton({
+    required this.courseId,
+    required this.isAuthenticated,
+  });
+
+  @override
+  ConsumerState<_EnrollButton> createState() => _EnrollButtonState();
+}
+
+class _EnrollButtonState extends ConsumerState<_EnrollButton> {
+  bool _enrolling = false;
+
+  Future<void> _enroll() async {
+    final studentId = ref.read(currentStudentIdProvider);
+    if (studentId == null) return;
+
+    setState(() => _enrolling = true);
+
+    try {
+      await ref
+          .read(enrollmentServiceProvider)
+          .enrollInCourse(studentId, widget.courseId);
+      ref.invalidate(myEnrollmentsProvider);
+      ref.invalidate(courseEnrollmentProvider(widget.courseId));
+      if (mounted) {
+        context.showSnackBar('Successfully enrolled!');
+      }
+    } catch (e) {
+      if (mounted) {
+        context.showSnackBar(
+          'Could not enroll. Please try again.',
+          isError: true,
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _enrolling = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (!widget.isAuthenticated) {
+      return SizedBox(
+        width: double.infinity,
+        child: ElevatedButton(
+          onPressed: () => context.go('/login'),
+          child: const Text('Login to Enroll'),
+        ),
+      );
+    }
+
+    final enrollmentAsync =
+        ref.watch(courseEnrollmentProvider(widget.courseId));
+
+    return enrollmentAsync.when(
+      data: (enrollment) {
+        if (enrollment != null) {
+          return SizedBox(
+            width: double.infinity,
+            child: ElevatedButton(
+              onPressed: () => context.pop(),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.success,
+              ),
+              child: const Text('Continue Learning'),
+            ),
+          );
+        }
+
+        return SizedBox(
+          width: double.infinity,
+          child: ElevatedButton(
+            onPressed: _enrolling ? null : _enroll,
+            child: _enrolling
+                ? const SizedBox(
+                    height: 20,
+                    width: 20,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      valueColor:
+                          AlwaysStoppedAnimation<Color>(AppColors.white),
+                    ),
+                  )
+                : const Text('Enroll Now'),
+          ),
+        );
+      },
+      loading: () => SizedBox(
+        width: double.infinity,
+        child: ElevatedButton(
+          onPressed: null,
+          child: const SizedBox(
+            height: 20,
+            width: 20,
+            child: CircularProgressIndicator(
+              strokeWidth: 2,
+              valueColor: AlwaysStoppedAnimation<Color>(AppColors.white),
+            ),
+          ),
+        ),
+      ),
+      error: (_, _) => SizedBox(
+        width: double.infinity,
+        child: ElevatedButton(
+          onPressed: _enrolling ? null : _enroll,
+          child: const Text('Enroll Now'),
+        ),
+      ),
     );
   }
 }
