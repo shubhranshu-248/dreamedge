@@ -37,6 +37,7 @@ export default async function CourseDetailPage({ params }: PageProps) {
   const { slug } = await params;
 
   let course: Course | null = null;
+  let isEnrolled = false;
 
   try {
     const supabase = await createClient();
@@ -50,6 +51,36 @@ export default async function CourseDetailPage({ params }: PageProps) {
     if (data) {
       course = data as unknown as Course;
     }
+
+    if (course) {
+      try {
+        const {
+          data: { user },
+        } = await supabase.auth.getUser();
+
+        if (user) {
+          const { data: student } = await supabase
+            .from("students")
+            .select("id")
+            .eq("user_id", user.id)
+            .single();
+
+          if (student) {
+            const { data: enrollment } = await supabase
+              .from("enrollments")
+              .select("id")
+              .eq("student_id", student.id)
+              .eq("course_id", course.id)
+              .eq("status", "active")
+              .maybeSingle();
+
+            isEnrolled = !!enrollment;
+          }
+        }
+      } catch {
+        // Enrollments table may not exist yet
+      }
+    }
   } catch {
     // Table may not exist
   }
@@ -58,5 +89,5 @@ export default async function CourseDetailPage({ params }: PageProps) {
     notFound();
   }
 
-  return <CourseDetailContent course={course} />;
+  return <CourseDetailContent course={course} isEnrolled={isEnrolled} />;
 }

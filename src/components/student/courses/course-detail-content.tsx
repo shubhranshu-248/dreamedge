@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import {
   ChevronRight,
   Clock,
@@ -13,15 +14,24 @@ import {
   Users,
   Share2,
   Play,
+  Loader2,
+  CheckCircle2,
 } from "lucide-react";
 import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
 import { formatINR } from "@/lib/format";
 import { formatRelativeTime } from "@/lib/format";
+import { loadRazorpay } from "@/lib/razorpay";
+import {
+  enrollFree,
+  createPaymentOrder,
+  verifyPayment,
+} from "@/app/(student)/courses/[slug]/actions";
 import type { Course } from "@/types/course";
 
 interface CourseDetailContentProps {
   course: Course;
+  isEnrolled?: boolean;
 }
 
 const DIFFICULTY_COLORS: Record<string, string> = {
@@ -30,8 +40,10 @@ const DIFFICULTY_COLORS: Record<string, string> = {
   advanced: "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400",
 };
 
-export function CourseDetailContent({ course }: CourseDetailContentProps) {
+export function CourseDetailContent({ course, isEnrolled = false }: CourseDetailContentProps) {
+  const router = useRouter();
   const [expanded, setExpanded] = useState(false);
+  const [enrolling, setEnrolling] = useState(false);
 
   const discount =
     course.original_price && course.original_price > course.price
@@ -41,10 +53,109 @@ export function CourseDetailContent({ course }: CourseDetailContentProps) {
   const longText = course.long_description || course.description || "";
   const isLong = longText.length > 500;
 
+  async function handleFreeEnroll() {
+    setEnrolling(true);
+    try {
+      const result = await enrollFree(course.id);
+      if (result.error) {
+        if (result.error === "Please log in to continue") {
+          router.push("/login");
+          return;
+        }
+        toast.error(result.error);
+        return;
+      }
+      toast.success("Enrolled successfully!", {
+        description: "You can now access this course.",
+      });
+      router.refresh();
+    } catch {
+      toast.error("Something went wrong. Please try again.");
+    } finally {
+      setEnrolling(false);
+    }
+  }
+
+  async function handlePaidEnroll() {
+    setEnrolling(true);
+    try {
+      const orderResult = await createPaymentOrder(course.id);
+      if (orderResult.error) {
+        if (orderResult.error === "Please log in to continue") {
+          router.push("/login");
+          return;
+        }
+        toast.error(orderResult.error);
+        return;
+      }
+
+      const loaded = await loadRazorpay();
+      if (!loaded) {
+        toast.error("Could not load payment gateway. Please try again.");
+        return;
+      }
+
+      const { orderId, amount, currency, key } = orderResult.data!;
+
+      const options = {
+        key,
+        amount,
+        currency,
+        name: "Dream Edge Online",
+        description: course.title,
+        order_id: orderId,
+        theme: { color: "#F26A21" },
+        handler: async (response: {
+          razorpay_order_id: string;
+          razorpay_payment_id: string;
+          razorpay_signature: string;
+        }) => {
+          const verifyResult = await verifyPayment({
+            razorpay_order_id: response.razorpay_order_id,
+            razorpay_payment_id: response.razorpay_payment_id,
+            razorpay_signature: response.razorpay_signature,
+            courseId: course.id,
+          });
+
+          if (verifyResult.error) {
+            toast.error(verifyResult.error);
+            return;
+          }
+
+          toast.success("Payment successful!", {
+            description: "You are now enrolled in this course.",
+          });
+          router.refresh();
+        },
+        modal: {
+          ondismiss: () => {
+            setEnrolling(false);
+          },
+        },
+      };
+
+      const rzp = new (window as any).Razorpay(options);
+      rzp.on("payment.failed", (response: any) => {
+        toast.error("Payment failed", {
+          description: response.error?.description || "Please try again.",
+        });
+        setEnrolling(false);
+      });
+      rzp.open();
+      return; // Don't reset enrolling — modal handles it
+    } catch {
+      toast.error("Something went wrong. Please try again.");
+    } finally {
+      setEnrolling(false);
+    }
+  }
+
   function handleEnroll() {
-    toast.info("Enrollment coming soon!", {
-      description: "Payment integration will be available shortly.",
-    });
+    if (course.price === 0) {
+      handleFreeEnroll();
+    } else {
+      handlePaidEnroll();
+    }
   }
 
   async function handleShare() {
@@ -55,6 +166,42 @@ export function CourseDetailContent({ course }: CourseDetailContentProps) {
     } catch {
       toast.error("Could not copy link");
     }
+  }
+
+  function renderEnrollButton() {
+    if (isEnrolled) {
+      return (
+        <Link
+          href={`/courses/${course.slug}/learn`}
+          className="mt-4 flex w-full items-center justify-center gap-2 rounded-lg bg-green-600 py-3 text-sm font-semibold text-white transition-colors hover:bg-green-700"
+        >
+          <CheckCircle2 className="h-4 w-4" />
+          Continue Learning
+        </Link>
+      );
+    }
+
+    const label =
+      course.price === 0
+        ? "Enroll Now — Free"
+        : `Enroll Now — ${formatINR(course.price)}`;
+
+    return (
+      <button
+        onClick={handleEnroll}
+        disabled={enrolling}
+        className="mt-4 flex w-full items-center justify-center gap-2 rounded-lg bg-brand-orange py-3 text-sm font-semibold text-white transition-colors hover:bg-brand-orange-dark disabled:opacity-70"
+      >
+        {enrolling ? (
+          <>
+            <Loader2 className="h-4 w-4 animate-spin" />
+            Processing…
+          </>
+        ) : (
+          label
+        )}
+      </button>
+    );
   }
 
   return (
@@ -226,12 +373,7 @@ export function CourseDetailContent({ course }: CourseDetailContentProps) {
               </div>
 
               {/* CTA */}
-              <button
-                onClick={handleEnroll}
-                className="mt-4 w-full rounded-lg bg-brand-orange py-3 text-sm font-semibold text-white transition-colors hover:bg-brand-orange-dark"
-              >
-                Enroll Now
-              </button>
+              {renderEnrollButton()}
               <button
                 onClick={handleShare}
                 className="mt-2 flex w-full items-center justify-center gap-2 rounded-lg border border-border py-2.5 text-sm font-medium transition-colors hover:bg-muted"
