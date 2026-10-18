@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../core/providers/course_provider.dart';
+import '../../core/providers/live_class_provider.dart';
 import '../../core/providers/student_provider.dart';
 import '../../core/providers/supabase_provider.dart';
 import '../../shared/theme/colors.dart';
@@ -13,6 +14,7 @@ import 'widgets/course_list_tile.dart';
 import 'widgets/featured_courses_section.dart';
 import 'widgets/greeting_header.dart';
 import 'widgets/search_bar_widget.dart';
+import 'widgets/today_classes_section.dart';
 
 class HomeScreen extends ConsumerWidget {
   const HomeScreen({super.key});
@@ -37,6 +39,7 @@ class HomeScreen extends ConsumerWidget {
             ref.invalidate(featuredCoursesProvider);
             ref.invalidate(allCoursesProvider);
             ref.invalidate(categoriesProvider);
+            ref.invalidate(todayClassesProvider);
           },
           child: CustomScrollView(
             slivers: [
@@ -53,6 +56,7 @@ class HomeScreen extends ConsumerWidget {
                   },
                 ),
               ),
+              const SliverToBoxAdapter(child: TodayClassesSection()),
               const SliverToBoxAdapter(child: CategoryChips()),
               const SliverToBoxAdapter(child: SizedBox(height: 24)),
               const SliverToBoxAdapter(child: FeaturedCoursesSection()),

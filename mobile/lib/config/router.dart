@@ -10,6 +10,8 @@ import '../features/auth/register_screen.dart';
 import '../features/courses/course_detail_screen.dart';
 import '../features/lessons/lessons_screen.dart';
 import '../features/onboarding/onboarding_screen.dart';
+import '../features/live/live_class_detail_screen.dart';
+import '../features/live/live_schedule_screen.dart';
 import '../features/player/video_player_screen.dart';
 import '../features/shell/app_shell.dart';
 import '../features/splash/splash_screen.dart';
@@ -94,6 +96,16 @@ final routerProvider = Provider<GoRouter>((ref) {
         path: '/player/:contentId',
         builder: (context, state) => VideoPlayerScreen(
           contentId: state.pathParameters['contentId']!,
+        ),
+      ),
+      GoRoute(
+        path: '/live',
+        builder: (context, state) => const LiveScheduleScreen(),
+      ),
+      GoRoute(
+        path: '/live/:id',
+        builder: (context, state) => LiveClassDetailScreen(
+          classId: state.pathParameters['id']!,
         ),
       ),
     ],
