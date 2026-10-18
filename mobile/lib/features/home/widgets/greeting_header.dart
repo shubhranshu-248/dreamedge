@@ -2,21 +2,20 @@ import 'package:flutter/material.dart';
 
 import '../../../shared/theme/colors.dart';
 import '../../../shared/theme/typography.dart';
+import '../../notifications/widgets/notification_bell.dart';
 
 class GreetingHeader extends StatelessWidget {
   final String displayName;
-  final VoidCallback? onNotificationTap;
 
   const GreetingHeader({
     super.key,
     required this.displayName,
-    this.onNotificationTap,
   });
 
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
+      padding: const EdgeInsets.fromLTRB(20, 16, 12, 0),
       child: Row(
         children: [
           Expanded(
@@ -38,13 +37,8 @@ class GreetingHeader extends StatelessWidget {
               ],
             ),
           ),
-          const SizedBox(width: 12),
-          IconButton(
-            onPressed: onNotificationTap,
-            icon: const Icon(Icons.notifications_outlined),
-            color: AppColors.textPrimary,
-            iconSize: 26,
-          ),
+          const SizedBox(width: 8),
+          const NotificationBell(),
         ],
       ),
     );

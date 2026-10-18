@@ -12,6 +12,7 @@ import '../features/lessons/lessons_screen.dart';
 import '../features/onboarding/onboarding_screen.dart';
 import '../features/live/live_class_detail_screen.dart';
 import '../features/live/live_schedule_screen.dart';
+import '../features/notifications/notification_inbox_screen.dart';
 import '../features/player/video_player_screen.dart';
 import '../features/shell/app_shell.dart';
 import '../features/splash/splash_screen.dart';
@@ -97,6 +98,10 @@ final routerProvider = Provider<GoRouter>((ref) {
         builder: (context, state) => VideoPlayerScreen(
           contentId: state.pathParameters['contentId']!,
         ),
+      ),
+      GoRoute(
+        path: '/notifications',
+        builder: (context, state) => const NotificationInboxScreen(),
       ),
       GoRoute(
         path: '/live',
