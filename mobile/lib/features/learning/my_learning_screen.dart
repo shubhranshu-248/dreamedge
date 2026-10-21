@@ -16,10 +16,7 @@ class MyLearningScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final enrollmentsAsync = ref.watch(myEnrollmentsProvider);
 
-    return Scaffold(
-      backgroundColor: AppColors.white,
-      appBar: AppBar(title: const Text('My Learning')),
-      body: RefreshIndicator(
+    return RefreshIndicator(
         color: AppColors.orange,
         onRefresh: () async {
           ref.invalidate(myEnrollmentsProvider);
@@ -65,7 +62,6 @@ class MyLearningScreen extends ConsumerWidget {
             ),
           ),
         ),
-      ),
-    );
+      );
   }
 }

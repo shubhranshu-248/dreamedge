@@ -20,10 +20,7 @@ class ProfileScreen extends ConsumerWidget {
     final email = user?.email ?? '';
     final initials = fullName.initials;
 
-    return Scaffold(
-      backgroundColor: AppColors.white,
-      appBar: AppBar(title: const Text('Profile')),
-      body: ListView(
+    return ListView(
         children: [
           const SizedBox(height: 24),
           Center(
@@ -110,8 +107,7 @@ class ProfileScreen extends ConsumerWidget {
           ),
           const SizedBox(height: 32),
         ],
-      ),
-    );
+      );
   }
 }
 

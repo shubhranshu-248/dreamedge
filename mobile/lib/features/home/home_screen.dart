@@ -30,10 +30,8 @@ class HomeScreen extends ConsumerWidget {
         'there';
     final allCourses = ref.watch(allCoursesProvider);
 
-    return Scaffold(
-      backgroundColor: AppColors.white,
-      body: SafeArea(
-        child: RefreshIndicator(
+    return SafeArea(
+      child: RefreshIndicator(
           color: AppColors.orange,
           onRefresh: () async {
             ref.invalidate(featuredCoursesProvider);
@@ -168,7 +166,6 @@ class HomeScreen extends ConsumerWidget {
             ],
           ),
         ),
-      ),
-    );
+      );
   }
 }

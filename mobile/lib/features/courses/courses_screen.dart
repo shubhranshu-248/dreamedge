@@ -49,10 +49,7 @@ class _CoursesScreenState extends ConsumerState<CoursesScreen> {
   Widget build(BuildContext context) {
     final courses = ref.watch(coursesProvider(_filter));
 
-    return Scaffold(
-      backgroundColor: AppColors.white,
-      appBar: AppBar(title: const Text('Courses')),
-      body: Column(
+    return Column(
         children: [
           Padding(
             padding: const EdgeInsets.fromLTRB(20, 12, 20, 0),
@@ -152,7 +149,6 @@ class _CoursesScreenState extends ConsumerState<CoursesScreen> {
             ),
           ),
         ],
-      ),
-    );
+      );
   }
 }
