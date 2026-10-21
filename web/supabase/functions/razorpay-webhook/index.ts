@@ -1,10 +1,12 @@
 // LIVE SCHEMA BINDING (confirmed via supabase db query --linked, 2026-10-22)
-// orders: id (uuid), student_id (uuid), course_id (uuid), status (order_status enum),
-//         razorpay_order_id (text?), razorpay_payment_id (text?)
-// courses: validity_days (int, default 365)
-// enrollments: student_id (uuid), course_id (uuid), payment_id (uuid?),
-//              status (enrollment_status enum), purchased_at (timestamptz), valid_until (timestamptz)
-// RPC: increment_student_count(p_course_id uuid) → courses.student_count (int)
+// orders: id (uuid NOT NULL), student_id (uuid NOT NULL), course_id (uuid NOT NULL),
+//         status (order_status NOT NULL, default 'pending'), razorpay_order_id (text NULL),
+//         razorpay_payment_id (text NULL)
+// courses: validity_days (int NOT NULL, default 365)
+// enrollments: student_id (uuid NOT NULL), course_id (uuid NOT NULL), payment_id (uuid NULL),
+//              status (enrollment_status NOT NULL, default 'active'),
+//              purchased_at (timestamptz NOT NULL, default now()), valid_until (timestamptz NOT NULL)
+// RPC: increment_student_count(p_course_id uuid) → courses.student_count (int NOT NULL, default 0)
 // No CORS — direct POST from Razorpay servers
 // No JWT — verify_jwt = false in config.toml; authenticates via X-Razorpay-Signature HMAC
 

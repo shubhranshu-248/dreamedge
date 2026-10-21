@@ -1,11 +1,16 @@
 // LIVE SCHEMA BINDING (confirmed via supabase db query --linked, 2026-10-22)
-// courses: id (uuid), title (text), price (numeric), original_price (numeric?),
-//          validity_days (int, default 365), status (content_status enum)
-// students: id (uuid), user_id (uuid), full_name (text), phone (text?), email (text?)
-// orders: id (uuid), student_id (uuid), course_id (uuid), amount (numeric),
-//         discount_amount (numeric), final_amount (numeric), payment_method (payment_method enum),
-//         razorpay_order_id (text?), status (order_status enum), created_at (timestamptz)
-// enrollments: id (uuid), student_id (uuid), course_id (uuid), status (enrollment_status enum)
+// courses: id (uuid NOT NULL), title (text NOT NULL), price (numeric NOT NULL, default 0),
+//          original_price (numeric NULL), validity_days (int NOT NULL, default 365),
+//          status (content_status NOT NULL, default 'draft')
+// students: id (uuid NOT NULL), user_id (uuid NOT NULL), full_name (text NOT NULL),
+//           phone (text NULL), email (text NULL)
+// orders: id (uuid NOT NULL), student_id (uuid NOT NULL), course_id (uuid NOT NULL),
+//         amount (numeric NOT NULL), discount_amount (numeric NOT NULL, default 0),
+//         final_amount (numeric NOT NULL), payment_method (payment_method NOT NULL, default 'razorpay'),
+//         razorpay_order_id (text NULL), status (order_status NOT NULL, default 'pending'),
+//         created_at (timestamptz NOT NULL, default now())
+// enrollments: id (uuid NOT NULL), student_id (uuid NOT NULL), course_id (uuid NOT NULL),
+//              status (enrollment_status NOT NULL, default 'active')
 
 import { serve } from 'https://deno.land/std@0.177.0/http/server.ts'
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.39.0'
