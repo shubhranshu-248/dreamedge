@@ -1,8 +1,11 @@
-// Binds to LIVE courses DDL (hybrid of initial + courses_table migrations)
-// Courses columns used: validity_days (int, default 365)
-// Enrollments columns: student_id, course_id, payment_id (uuid), status, purchased_at, valid_until
-// Orders columns: id, student_id, course_id, status, razorpay_order_id, razorpay_payment_id, razorpay_signature
-// RPC: increment_student_count (targets student_count column)
+// LIVE SCHEMA BINDING (confirmed via supabase db query --linked, 2026-10-22)
+// orders: id (uuid), student_id (uuid), course_id (uuid), status (order_status enum),
+//         razorpay_order_id (text?), razorpay_payment_id (text?), razorpay_signature (text?)
+// courses: validity_days (int, default 365)
+// students: id (uuid), user_id (uuid)
+// enrollments: student_id (uuid), course_id (uuid), payment_id (uuid?),
+//              status (enrollment_status enum), purchased_at (timestamptz), valid_until (timestamptz)
+// RPC: increment_student_count(p_course_id uuid) → courses.student_count (int)
 
 import { serve } from 'https://deno.land/std@0.177.0/http/server.ts'
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.39.0'
@@ -15,13 +18,16 @@ const DEFAULT_VALIDITY_DAYS = 365
 
 const ALLOWED_ORIGINS = (Deno.env.get('ALLOWED_ORIGINS') ?? 'https://dreamedge.online,https://dream-edge-olive.vercel.app').split(',')
 
-function corsHeaders(req: Request) {
-  const origin = req.headers.get('Origin') ?? ''
-  return {
-    'Access-Control-Allow-Origin': origin === '' || ALLOWED_ORIGINS.includes(origin) ? (origin || ALLOWED_ORIGINS[0]) : ALLOWED_ORIGINS[0],
+function corsHeaders(req: Request): Record<string, string> {
+  const origin = req.headers.get('Origin')
+  const headers: Record<string, string> = {
     'Vary': 'Origin',
     'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
   }
+  if (origin && ALLOWED_ORIGINS.includes(origin)) {
+    headers['Access-Control-Allow-Origin'] = origin
+  }
+  return headers
 }
 
 async function hmacSha256(key: string, message: string): Promise<string> {

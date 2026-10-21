@@ -1,8 +1,12 @@
-// Binds to LIVE courses DDL (hybrid of initial + courses_table migrations)
-// Courses columns used: validity_days (int, default 365)
+// LIVE SCHEMA BINDING (confirmed via supabase db query --linked, 2026-10-22)
+// orders: id (uuid), student_id (uuid), course_id (uuid), status (order_status enum),
+//         razorpay_order_id (text?), razorpay_payment_id (text?)
+// courses: validity_days (int, default 365)
+// enrollments: student_id (uuid), course_id (uuid), payment_id (uuid?),
+//              status (enrollment_status enum), purchased_at (timestamptz), valid_until (timestamptz)
+// RPC: increment_student_count(p_course_id uuid) → courses.student_count (int)
 // No CORS — direct POST from Razorpay servers
 // No JWT — verify_jwt = false in config.toml; authenticates via X-Razorpay-Signature HMAC
-// RPC: increment_student_count (targets student_count column)
 
 import { serve } from 'https://deno.land/std@0.177.0/http/server.ts'
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.39.0'
