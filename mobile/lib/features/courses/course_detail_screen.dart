@@ -109,6 +109,9 @@ class CourseDetailScreen extends ConsumerWidget {
                     _EnrollButton(
                       courseId: courseId,
                       isAuthenticated: isAuthenticated,
+                      courseName: course.title,
+                      price: course.discountPrice ?? course.price,
+                      thumbnailUrl: course.thumbnailUrl,
                     ),
                     if (course.description != null &&
                         course.description!.isNotEmpty) ...[
@@ -283,10 +286,16 @@ class CourseDetailScreen extends ConsumerWidget {
 class _EnrollButton extends ConsumerStatefulWidget {
   final String courseId;
   final bool isAuthenticated;
+  final String courseName;
+  final double price;
+  final String? thumbnailUrl;
 
   const _EnrollButton({
     required this.courseId,
     required this.isAuthenticated,
+    required this.courseName,
+    required this.price,
+    this.thumbnailUrl,
   });
 
   @override
@@ -353,6 +362,23 @@ class _EnrollButtonState extends ConsumerState<_EnrollButton> {
           );
         }
 
+        if (widget.price > 0) {
+          return SizedBox(
+            width: double.infinity,
+            child: ElevatedButton(
+              onPressed: () {
+                context.push('/checkout', extra: {
+                  'courseId': widget.courseId,
+                  'courseName': widget.courseName,
+                  'price': widget.price,
+                  'thumbnailUrl': widget.thumbnailUrl,
+                });
+              },
+              child: Text('Buy Now — ₹${widget.price.toInt()}'),
+            ),
+          );
+        }
+
         return SizedBox(
           width: double.infinity,
           child: ElevatedButton(
@@ -367,7 +393,7 @@ class _EnrollButtonState extends ConsumerState<_EnrollButton> {
                           AlwaysStoppedAnimation<Color>(AppColors.white),
                     ),
                   )
-                : const Text('Enroll Now'),
+                : const Text('Enroll Now — Free'),
           ),
         );
       },
@@ -388,8 +414,19 @@ class _EnrollButtonState extends ConsumerState<_EnrollButton> {
       error: (_, _) => SizedBox(
         width: double.infinity,
         child: ElevatedButton(
-          onPressed: _enrolling ? null : _enroll,
-          child: const Text('Enroll Now'),
+          onPressed: widget.price > 0
+              ? () {
+                  context.push('/checkout', extra: {
+                    'courseId': widget.courseId,
+                    'courseName': widget.courseName,
+                    'price': widget.price,
+                    'thumbnailUrl': widget.thumbnailUrl,
+                  });
+                }
+              : (_enrolling ? null : _enroll),
+          child: widget.price > 0
+              ? Text('Buy Now — ₹${widget.price.toInt()}')
+              : const Text('Enroll Now — Free'),
         ),
       ),
     );

@@ -13,6 +13,8 @@ import '../features/onboarding/onboarding_screen.dart';
 import '../features/live/live_class_detail_screen.dart';
 import '../features/live/live_schedule_screen.dart';
 import '../features/notifications/notification_inbox_screen.dart';
+import '../features/payments/checkout_screen.dart';
+import '../features/payments/payment_history_screen.dart';
 import '../features/player/video_player_screen.dart';
 import '../features/shell/app_shell.dart';
 import '../features/splash/splash_screen.dart';
@@ -102,6 +104,22 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/notifications',
         builder: (context, state) => const NotificationInboxScreen(),
+      ),
+      GoRoute(
+        path: '/checkout',
+        builder: (context, state) {
+          final extra = state.extra as Map<String, dynamic>;
+          return CheckoutScreen(
+            courseId: extra['courseId'] as String,
+            courseName: extra['courseName'] as String,
+            price: extra['price'] as double,
+            thumbnailUrl: extra['thumbnailUrl'] as String?,
+          );
+        },
+      ),
+      GoRoute(
+        path: '/payment-history',
+        builder: (context, state) => const PaymentHistoryScreen(),
       ),
       GoRoute(
         path: '/live',
