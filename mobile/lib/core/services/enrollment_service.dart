@@ -12,7 +12,7 @@ class EnrollmentService {
         .from('enrollments')
         .select('*, courses(*)')
         .eq('student_id', studentId)
-        .order('last_accessed_at', ascending: false, nullsFirst: false);
+        .order('purchased_at', ascending: false);
 
     return (data as List)
         .map((row) => Enrollment.fromJson(row as Map<String, dynamic>))
@@ -38,30 +38,15 @@ class EnrollmentService {
     String studentId,
     String courseId,
   ) async {
+    final validUntil = DateTime.now().add(const Duration(days: 365));
+
     final data = await _client.from('enrollments').insert({
       'student_id': studentId,
       'course_id': courseId,
       'status': 'active',
-      'progress_percentage': 0,
-      'enrolled_at': DateTime.now().toIso8601String(),
+      'valid_until': validUntil.toIso8601String(),
     }).select('*, courses(*)').single();
 
     return Enrollment.fromJson(data);
-  }
-
-  Future<void> updateProgress(
-    String enrollmentId,
-    double progress,
-  ) async {
-    await _client.from('enrollments').update({
-      'progress_percentage': progress,
-      'last_accessed_at': DateTime.now().toIso8601String(),
-    }).eq('id', enrollmentId);
-  }
-
-  Future<void> updateLastAccessed(String enrollmentId) async {
-    await _client.from('enrollments').update({
-      'last_accessed_at': DateTime.now().toIso8601String(),
-    }).eq('id', enrollmentId);
   }
 }

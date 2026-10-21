@@ -1,9 +1,16 @@
+// Binds to courses DDL: 20261012000000_initial_schema.sql
+// Courses columns used: validity_days (int, default 365)
+// No CORS — direct POST from Razorpay servers
+// No JWT — verify_jwt = false in config.toml; authenticates via X-Razorpay-Signature HMAC
+
 import { serve } from 'https://deno.land/std@0.177.0/http/server.ts'
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.39.0'
 
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!
 const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
 const RAZORPAY_WEBHOOK_SECRET = Deno.env.get('RAZORPAY_WEBHOOK_SECRET')!
+
+const DEFAULT_VALIDITY_DAYS = 365
 
 async function hmacSha256(key: string, message: string): Promise<string> {
   const encoder = new TextEncoder()
@@ -48,7 +55,6 @@ serve(async (req) => {
       const payment = event.payload.payment?.entity
       const razorpayOrderId = payment?.order_id ?? event.payload.order?.entity?.id
       const razorpayPaymentId = payment?.id
-      const courseId = payment?.notes?.course_id ?? event.payload.order?.entity?.notes?.course_id
 
       if (!razorpayOrderId) {
         console.error('No razorpay_order_id in webhook payload')
@@ -85,7 +91,7 @@ serve(async (req) => {
         .eq('id', order.course_id)
         .single()
 
-      const validityDays = course?.validity_days ?? 365
+      const validityDays = course?.validity_days ?? DEFAULT_VALIDITY_DAYS
       const validUntil = new Date()
       validUntil.setDate(validUntil.getDate() + validityDays)
 

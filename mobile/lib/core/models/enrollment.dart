@@ -4,10 +4,10 @@ class Enrollment {
   final String id;
   final String studentId;
   final String courseId;
-  final DateTime enrolledAt;
+  final DateTime purchasedAt;
+  final DateTime? validUntil;
+  final String? paymentId;
   final String status;
-  final double progressPercentage;
-  final DateTime? lastAccessedAt;
   final DateTime createdAt;
   final Course? course;
 
@@ -15,10 +15,10 @@ class Enrollment {
     required this.id,
     required this.studentId,
     required this.courseId,
-    required this.enrolledAt,
+    required this.purchasedAt,
+    this.validUntil,
+    this.paymentId,
     required this.status,
-    this.progressPercentage = 0,
-    this.lastAccessedAt,
     required this.createdAt,
     this.course,
   });
@@ -26,9 +26,6 @@ class Enrollment {
   bool get isActive => status == 'active';
   bool get isCompleted => status == 'completed';
   bool get isExpired => status == 'expired';
-
-  String get formattedProgress =>
-      '${progressPercentage.round()}%';
 
   factory Enrollment.fromJson(Map<String, dynamic> json) {
     Course? course;
@@ -40,13 +37,12 @@ class Enrollment {
       id: json['id'] as String,
       studentId: json['student_id'] as String,
       courseId: json['course_id'] as String,
-      enrolledAt: DateTime.parse(json['enrolled_at'] as String),
-      status: json['status'] as String? ?? 'active',
-      progressPercentage:
-          (json['progress_percentage'] as num?)?.toDouble() ?? 0,
-      lastAccessedAt: json['last_accessed_at'] != null
-          ? DateTime.parse(json['last_accessed_at'] as String)
+      purchasedAt: DateTime.parse(json['purchased_at'] as String),
+      validUntil: json['valid_until'] != null
+          ? DateTime.parse(json['valid_until'] as String)
           : null,
+      paymentId: json['payment_id'] as String?,
+      status: json['status'] as String? ?? 'active',
       createdAt: DateTime.parse(json['created_at'] as String),
       course: course,
     );
@@ -57,10 +53,10 @@ class Enrollment {
       'id': id,
       'student_id': studentId,
       'course_id': courseId,
-      'enrolled_at': enrolledAt.toIso8601String(),
+      'purchased_at': purchasedAt.toIso8601String(),
+      'valid_until': validUntil?.toIso8601String(),
+      'payment_id': paymentId,
       'status': status,
-      'progress_percentage': progressPercentage,
-      'last_accessed_at': lastAccessedAt?.toIso8601String(),
     };
   }
 }

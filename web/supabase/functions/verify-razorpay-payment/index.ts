@@ -1,3 +1,8 @@
+// Binds to courses DDL: 20261012000000_initial_schema.sql
+// Courses columns used: validity_days (int, default 365)
+// Enrollments columns: student_id, course_id, payment_id (uuid), status, purchased_at, valid_until
+// Orders columns: id, student_id, course_id, status, razorpay_order_id, razorpay_payment_id, razorpay_signature
+
 import { serve } from 'https://deno.land/std@0.177.0/http/server.ts'
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.39.0'
 
@@ -5,9 +10,17 @@ const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!
 const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
 const RAZORPAY_KEY_SECRET = Deno.env.get('RAZORPAY_KEY_SECRET')!
 
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+const DEFAULT_VALIDITY_DAYS = 365
+
+const ALLOWED_ORIGINS = (Deno.env.get('ALLOWED_ORIGINS') ?? 'https://dreamedge.online,https://dream-edge-olive.vercel.app').split(',')
+
+function corsHeaders(req: Request) {
+  const origin = req.headers.get('Origin') ?? ''
+  return {
+    'Access-Control-Allow-Origin': origin === '' || ALLOWED_ORIGINS.includes(origin) ? (origin || ALLOWED_ORIGINS[0]) : ALLOWED_ORIGINS[0],
+    'Vary': 'Origin',
+    'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+  }
 }
 
 async function hmacSha256(key: string, message: string): Promise<string> {
@@ -28,17 +41,22 @@ async function hmacSha256(key: string, message: string): Promise<string> {
 async function completeOrder(
   serviceClient: ReturnType<typeof createClient>,
   orderId: string,
+  razorpayOrderId: string,
   razorpayPaymentId: string,
   razorpaySignature: string
 ): Promise<{ enrolled: boolean; order_id: string; enrollment_id?: string; error?: string }> {
   const { data: order, error: orderError } = await serviceClient
     .from('orders')
-    .select('id, student_id, course_id, status')
+    .select('id, student_id, course_id, status, razorpay_order_id')
     .eq('id', orderId)
     .single()
 
   if (orderError || !order) {
     return { enrolled: false, order_id: orderId, error: 'Order not found' }
+  }
+
+  if (order.razorpay_order_id !== razorpayOrderId) {
+    return { enrolled: false, order_id: orderId, error: 'razorpay_order_id does not match this order' }
   }
 
   if (order.status === 'completed') {
@@ -73,7 +91,7 @@ async function completeOrder(
     .eq('id', order.course_id)
     .single()
 
-  const validityDays = course?.validity_days ?? 365
+  const validityDays = course?.validity_days ?? DEFAULT_VALIDITY_DAYS
   const validUntil = new Date()
   validUntil.setDate(validUntil.getDate() + validityDays)
 
@@ -106,8 +124,10 @@ async function completeOrder(
 }
 
 serve(async (req) => {
+  const cors = corsHeaders(req)
+
   if (req.method === 'OPTIONS') {
-    return new Response('ok', { headers: corsHeaders })
+    return new Response('ok', { headers: cors })
   }
 
   try {
@@ -115,7 +135,7 @@ serve(async (req) => {
     if (!authHeader) {
       return new Response(JSON.stringify({ error: 'Unauthorized' }), {
         status: 401,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        headers: { ...cors, 'Content-Type': 'application/json' },
       })
     }
 
@@ -127,7 +147,7 @@ serve(async (req) => {
     if (authError || !user) {
       return new Response(JSON.stringify({ error: 'Invalid token' }), {
         status: 401,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        headers: { ...cors, 'Content-Type': 'application/json' },
       })
     }
 
@@ -136,7 +156,34 @@ serve(async (req) => {
     if (!order_id || !razorpay_order_id || !razorpay_payment_id || !razorpay_signature) {
       return new Response(JSON.stringify({ error: 'Missing required fields' }), {
         status: 400,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        headers: { ...cors, 'Content-Type': 'application/json' },
+      })
+    }
+
+    // SECURITY: verify the authenticated user owns this order
+    const { data: order } = await serviceClient
+      .from('orders')
+      .select('student_id')
+      .eq('id', order_id)
+      .single()
+
+    if (!order) {
+      return new Response(JSON.stringify({ error: 'Order not found' }), {
+        status: 404,
+        headers: { ...cors, 'Content-Type': 'application/json' },
+      })
+    }
+
+    const { data: student } = await serviceClient
+      .from('students')
+      .select('id')
+      .eq('user_id', user.id)
+      .maybeSingle()
+
+    if (!student || student.id !== order.student_id) {
+      return new Response(JSON.stringify({ error: 'Not your order' }), {
+        status: 403,
+        headers: { ...cors, 'Content-Type': 'application/json' },
       })
     }
 
@@ -154,21 +201,28 @@ serve(async (req) => {
 
       return new Response(JSON.stringify({ error: 'Invalid payment signature' }), {
         status: 400,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        headers: { ...cors, 'Content-Type': 'application/json' },
       })
     }
 
-    const result = await completeOrder(serviceClient, order_id, razorpay_payment_id, razorpay_signature)
+    const result = await completeOrder(serviceClient, order_id, razorpay_order_id, razorpay_payment_id, razorpay_signature)
+
+    if (result.error === 'razorpay_order_id does not match this order') {
+      return new Response(JSON.stringify(result), {
+        status: 400,
+        headers: { ...cors, 'Content-Type': 'application/json' },
+      })
+    }
 
     return new Response(JSON.stringify(result), {
       status: result.enrolled ? 200 : 500,
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      headers: { ...cors, 'Content-Type': 'application/json' },
     })
   } catch (err) {
     console.error('Unexpected error:', err)
     return new Response(JSON.stringify({ error: 'Internal server error' }), {
       status: 500,
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      headers: { ...corsHeaders(req), 'Content-Type': 'application/json' },
     })
   }
 })

@@ -75,42 +75,40 @@ class EnrolledCourseCard extends StatelessWidget {
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
                   ),
-                  const SizedBox(height: 8),
+                  const SizedBox(height: 6),
                   Row(
                     children: [
-                      Expanded(
-                        child: ClipRRect(
-                          borderRadius: BorderRadius.circular(4),
-                          child: LinearProgressIndicator(
-                            value: enrollment.progressPercentage / 100,
-                            backgroundColor:
-                                AppColors.gray.withValues(alpha: 0.15),
-                            valueColor: const AlwaysStoppedAnimation<Color>(
-                                AppColors.orange),
-                            minHeight: 6,
-                          ),
-                        ),
+                      Icon(
+                        enrollment.isActive
+                            ? Icons.check_circle_rounded
+                            : Icons.schedule_rounded,
+                        size: 14,
+                        color: enrollment.isActive
+                            ? AppColors.success
+                            : AppColors.gray,
                       ),
-                      const SizedBox(width: 10),
+                      const SizedBox(width: 4),
                       Text(
-                        enrollment.formattedProgress,
+                        enrollment.isActive ? 'Active' : 'Expired',
                         style: AppTypography.caption.copyWith(
-                          color: AppColors.textSecondary,
+                          color: enrollment.isActive
+                              ? AppColors.success
+                              : AppColors.gray,
                           fontWeight: FontWeight.w500,
                         ),
                       ),
+                      if (enrollment.validUntil != null) ...[
+                        const SizedBox(width: 8),
+                        Text(
+                          'Valid until ${_formatDate(enrollment.validUntil!)}',
+                          style: AppTypography.caption.copyWith(
+                            color: AppColors.gray,
+                            fontSize: 11,
+                          ),
+                        ),
+                      ],
                     ],
                   ),
-                  if (enrollment.lastAccessedAt != null) ...[
-                    const SizedBox(height: 4),
-                    Text(
-                      _formatLastAccessed(enrollment.lastAccessedAt!),
-                      style: AppTypography.caption.copyWith(
-                        color: AppColors.gray,
-                        fontSize: 11,
-                      ),
-                    ),
-                  ],
                 ],
               ),
             ),
@@ -139,13 +137,7 @@ class EnrolledCourseCard extends StatelessWidget {
     );
   }
 
-  String _formatLastAccessed(DateTime date) {
-    final now = DateTime.now();
-    final diff = now.difference(date);
-
-    if (diff.inMinutes < 60) return 'Accessed just now';
-    if (diff.inHours < 24) return 'Accessed ${diff.inHours}h ago';
-    if (diff.inDays < 7) return 'Accessed ${diff.inDays}d ago';
-    return 'Accessed on ${date.day}/${date.month}/${date.year}';
+  String _formatDate(DateTime date) {
+    return '${date.day}/${date.month}/${date.year}';
   }
 }
