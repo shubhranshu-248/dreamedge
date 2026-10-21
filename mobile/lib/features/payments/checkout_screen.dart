@@ -3,24 +3,19 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:razorpay_flutter/razorpay_flutter.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../config/payment_config.dart';
+import '../../core/providers/course_provider.dart';
+import '../../core/providers/enrollment_provider.dart';
 import '../../core/providers/payment_provider.dart';
 import '../../shared/theme/colors.dart';
 
 class CheckoutScreen extends ConsumerStatefulWidget {
   final String courseId;
-  final String courseName;
-  final double price;
-  final String? thumbnailUrl;
 
   const CheckoutScreen({
     super.key,
     required this.courseId,
-    required this.courseName,
-    required this.price,
-    this.thumbnailUrl,
   });
 
   @override
@@ -31,6 +26,7 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
   late Razorpay _razorpay;
   bool _isProcessing = false;
   String? _currentOrderId;
+  String? _currentRazorpayOrderId;
 
   @override
   void initState() {
@@ -48,6 +44,7 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
   }
 
   Future<void> _initiatePayment() async {
+    if (_isProcessing) return;
     setState(() => _isProcessing = true);
 
     try {
@@ -61,30 +58,27 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
         return;
       }
 
-      final order = await service.createOrder(
+      final orderData = await service.createRazorpayOrder(
         courseId: widget.courseId,
-        amount: widget.price,
       );
 
-      _currentOrderId = order['id'] as String;
+      _currentOrderId = orderData['order_id'] as String;
+      _currentRazorpayOrderId = orderData['razorpay_order_id'] as String;
+      final prefill = orderData['prefill'] as Map<String, dynamic>? ?? {};
 
       final options = {
-        'key': PaymentConfig.razorpayKeyId,
-        'amount': (widget.price * 100).toInt(),
+        'key': orderData['key_id'] as String,
+        'amount': ((orderData['amount'] as num).toDouble() * 100).toInt(),
+        'currency': orderData['currency'] as String? ?? 'INR',
         'name': PaymentConfig.merchantName,
-        'description': widget.courseName,
-        'currency': PaymentConfig.currency,
-        'receipt': order['receipt'],
+        'order_id': _currentRazorpayOrderId,
         'prefill': {
-          'email':
-              Supabase.instance.client.auth.currentUser?.email ?? '',
+          'name': prefill['name'] ?? '',
+          'email': prefill['email'] ?? '',
+          'contact': prefill['contact'] ?? '',
         },
         'theme': {
           'color': '#F26A21',
-        },
-        'notes': {
-          'course_id': widget.courseId,
-          'order_id': _currentOrderId,
         },
       };
 
@@ -101,20 +95,17 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
     try {
       final service = ref.read(paymentServiceProvider);
 
-      await service.completeOrder(
+      await service.verifyPayment(
         orderId: _currentOrderId!,
+        razorpayOrderId: _currentRazorpayOrderId!,
         razorpayPaymentId: response.paymentId ?? '',
         razorpaySignature: response.signature ?? '',
-        razorpayOrderId: response.orderId,
-      );
-
-      await service.enrollUser(
-        courseId: widget.courseId,
-        orderId: _currentOrderId!,
       );
 
       ref.invalidate(orderHistoryProvider);
       ref.invalidate(isEnrolledProvider(widget.courseId));
+      ref.invalidate(courseEnrollmentProvider(widget.courseId));
+      ref.invalidate(myEnrollmentsProvider);
 
       if (mounted) {
         _showSuccessDialog();
@@ -122,7 +113,10 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
     } catch (e) {
       if (mounted) {
         _showSnackBar(
-            'Payment received but enrollment failed. Contact support.');
+          'Payment received. If enrollment doesn\'t appear shortly, '
+          'our system will process it automatically.',
+          isError: false,
+        );
       }
     } finally {
       if (mounted) setState(() => _isProcessing = false);
@@ -130,11 +124,6 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
   }
 
   void _handlePaymentError(PaymentFailureResponse response) {
-    final service = ref.read(paymentServiceProvider);
-    if (_currentOrderId != null) {
-      service.failOrder(_currentOrderId!);
-    }
-
     if (mounted) {
       _showSnackBar(response.message ?? 'Payment failed. Please try again.');
       setState(() => _isProcessing = false);
@@ -160,6 +149,10 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
   }
 
   void _showSuccessDialog() {
+    final courseAsync = ref.read(courseDetailProvider(widget.courseId));
+    final courseName =
+        courseAsync.valueOrNull?.title ?? 'your course';
+
     showDialog(
       context: context,
       barrierDismissible: false,
@@ -189,7 +182,7 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
             ),
             const SizedBox(height: 8),
             Text(
-              'You are now enrolled in ${widget.courseName}',
+              'You are now enrolled in $courseName',
               textAlign: TextAlign.center,
               style: GoogleFonts.inter(
                 fontSize: 14,
@@ -226,186 +219,245 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: AppColors.surface,
-      appBar: AppBar(
-        title: Text(
-          'Checkout',
-          style: GoogleFonts.playfairDisplay(
-            fontWeight: FontWeight.w700,
-            fontSize: 20,
-            color: AppColors.textPrimary,
-          ),
-        ),
-        backgroundColor: AppColors.white,
-        surfaceTintColor: Colors.transparent,
-        elevation: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back_rounded,
-              color: AppColors.textPrimary),
-          onPressed: () => context.pop(),
-        ),
-      ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Container(
-              decoration: BoxDecoration(
-                color: AppColors.white,
-                borderRadius: BorderRadius.circular(16),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.05),
-                    blurRadius: 10,
-                    offset: const Offset(0, 2),
-                  ),
-                ],
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  if (widget.thumbnailUrl != null)
-                    ClipRRect(
-                      borderRadius:
-                          const BorderRadius.vertical(top: Radius.circular(16)),
-                      child: AspectRatio(
-                        aspectRatio: 16 / 9,
-                        child: Image.network(
-                          widget.thumbnailUrl!,
-                          fit: BoxFit.cover,
-                          errorBuilder: (_, _, _) => Container(
-                            color: AppColors.darkBlue.withValues(alpha: 0.1),
-                            child: const Icon(Icons.image_rounded,
-                                size: 48, color: AppColors.textSecondary),
-                          ),
-                        ),
-                      ),
-                    ),
-                  Padding(
-                    padding: const EdgeInsets.all(16),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          widget.courseName,
-                          style: GoogleFonts.inter(
-                            fontSize: 18,
-                            fontWeight: FontWeight.w600,
-                            color: AppColors.textPrimary,
-                          ),
-                        ),
-                        const SizedBox(height: 4),
-                        Text(
-                          'Full course access with all lessons and materials',
-                          style: GoogleFonts.inter(
-                            fontSize: 13,
-                            color: AppColors.textSecondary,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 24),
-            Text(
-              'Order Summary',
+    final courseAsync = ref.watch(courseDetailProvider(widget.courseId));
+
+    return courseAsync.when(
+      data: (course) {
+        final price = course.discountPrice ?? course.price;
+        final hasDiscount =
+            course.discountPrice != null && course.discountPrice! < course.price;
+
+        return Scaffold(
+          backgroundColor: AppColors.surface,
+          appBar: AppBar(
+            title: Text(
+              'Checkout',
               style: GoogleFonts.playfairDisplay(
-                fontSize: 18,
                 fontWeight: FontWeight.w700,
+                fontSize: 20,
                 color: AppColors.textPrimary,
               ),
             ),
-            const SizedBox(height: 12),
-            Container(
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: AppColors.white,
-                borderRadius: BorderRadius.circular(12),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.05),
-                    blurRadius: 10,
-                    offset: const Offset(0, 2),
+            backgroundColor: AppColors.white,
+            surfaceTintColor: Colors.transparent,
+            elevation: 0,
+            leading: IconButton(
+              icon: const Icon(Icons.arrow_back_rounded,
+                  color: AppColors.textPrimary),
+              onPressed: () => context.pop(),
+            ),
+          ),
+          body: SingleChildScrollView(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Container(
+                  decoration: BoxDecoration(
+                    color: AppColors.white,
+                    borderRadius: BorderRadius.circular(16),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withValues(alpha: 0.05),
+                        blurRadius: 10,
+                        offset: const Offset(0, 2),
+                      ),
+                    ],
                   ),
-                ],
-              ),
-              child: Column(
-                children: [
-                  _buildSummaryRow(
-                      'Course Price', '₹${widget.price.toStringAsFixed(0)}'),
-                  const Padding(
-                    padding: EdgeInsets.symmetric(vertical: 12),
-                    child: Divider(height: 1),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      if (course.thumbnailUrl != null)
+                        ClipRRect(
+                          borderRadius: const BorderRadius.vertical(
+                              top: Radius.circular(16)),
+                          child: AspectRatio(
+                            aspectRatio: 16 / 9,
+                            child: Image.network(
+                              course.thumbnailUrl!,
+                              fit: BoxFit.cover,
+                              errorBuilder: (_, _, _) => Container(
+                                color:
+                                    AppColors.darkBlue.withValues(alpha: 0.1),
+                                child: const Icon(Icons.image_rounded,
+                                    size: 48, color: AppColors.textSecondary),
+                              ),
+                            ),
+                          ),
+                        ),
+                      Padding(
+                        padding: const EdgeInsets.all(16),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              course.title,
+                              style: GoogleFonts.inter(
+                                fontSize: 18,
+                                fontWeight: FontWeight.w600,
+                                color: AppColors.textPrimary,
+                              ),
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              'Full course access with all lessons and materials',
+                              style: GoogleFonts.inter(
+                                fontSize: 13,
+                                color: AppColors.textSecondary,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
                   ),
-                  _buildSummaryRow('Discount', '₹0', isSecondary: true),
-                  const Padding(
-                    padding: EdgeInsets.symmetric(vertical: 12),
-                    child: Divider(height: 1),
+                ),
+                const SizedBox(height: 24),
+                Text(
+                  'Order Summary',
+                  style: GoogleFonts.playfairDisplay(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w700,
+                    color: AppColors.textPrimary,
                   ),
-                  _buildSummaryRow(
-                      'Total', '₹${widget.price.toStringAsFixed(0)}',
-                      isBold: true),
-                ],
+                ),
+                const SizedBox(height: 12),
+                Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: AppColors.white,
+                    borderRadius: BorderRadius.circular(12),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withValues(alpha: 0.05),
+                        blurRadius: 10,
+                        offset: const Offset(0, 2),
+                      ),
+                    ],
+                  ),
+                  child: Column(
+                    children: [
+                      _buildSummaryRow('Course Price',
+                          '₹${course.price.toStringAsFixed(0)}'),
+                      const Padding(
+                        padding: EdgeInsets.symmetric(vertical: 12),
+                        child: Divider(height: 1),
+                      ),
+                      _buildSummaryRow(
+                        'Discount',
+                        hasDiscount
+                            ? '-₹${(course.price - price).toStringAsFixed(0)}'
+                            : '₹0',
+                        isSecondary: true,
+                      ),
+                      const Padding(
+                        padding: EdgeInsets.symmetric(vertical: 12),
+                        child: Divider(height: 1),
+                      ),
+                      _buildSummaryRow(
+                          'Total', '₹${price.toStringAsFixed(0)}',
+                          isBold: true),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 16),
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: AppColors.success.withValues(alpha: 0.08),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: Row(
+                    children: [
+                      const Icon(Icons.shield_rounded,
+                          color: AppColors.success, size: 20),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: Text(
+                          'Payments are secured by Razorpay. Your card details are never stored.',
+                          style: GoogleFonts.inter(
+                              fontSize: 12, color: AppColors.textSecondary),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+          bottomNavigationBar: SafeArea(
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
+              child: SizedBox(
+                height: 52,
+                child: ElevatedButton(
+                  onPressed: _isProcessing ? null : _initiatePayment,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.orange,
+                    foregroundColor: AppColors.white,
+                    disabledBackgroundColor:
+                        AppColors.orange.withValues(alpha: 0.5),
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(14)),
+                    elevation: 0,
+                  ),
+                  child: _isProcessing
+                      ? const SizedBox(
+                          height: 22,
+                          width: 22,
+                          child: CircularProgressIndicator(
+                              strokeWidth: 2.5, color: AppColors.white),
+                        )
+                      : Text(
+                          'Pay ₹${price.toStringAsFixed(0)}',
+                          style: GoogleFonts.inter(
+                              fontSize: 16, fontWeight: FontWeight.w600),
+                        ),
+                ),
               ),
             ),
-            const SizedBox(height: 16),
-            Container(
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: AppColors.success.withValues(alpha: 0.08),
-                borderRadius: BorderRadius.circular(10),
-              ),
-              child: Row(
-                children: [
-                  const Icon(Icons.shield_rounded,
-                      color: AppColors.success, size: 20),
-                  const SizedBox(width: 10),
-                  Expanded(
-                    child: Text(
-                      'Payments are secured by Razorpay. Your card details are never stored.',
-                      style: GoogleFonts.inter(
-                          fontSize: 12, color: AppColors.textSecondary),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ],
+          ),
+        );
+      },
+      loading: () => Scaffold(
+        backgroundColor: AppColors.surface,
+        appBar: AppBar(
+          title: Text('Checkout',
+              style: GoogleFonts.playfairDisplay(
+                  fontWeight: FontWeight.w700, fontSize: 20)),
+          backgroundColor: AppColors.white,
+        ),
+        body: const Center(
+          child: CircularProgressIndicator(color: AppColors.orange),
         ),
       ),
-      bottomNavigationBar: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
-          child: SizedBox(
-            height: 52,
-            child: ElevatedButton(
-              onPressed: _isProcessing ? null : _initiatePayment,
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.orange,
-                foregroundColor: AppColors.white,
-                disabledBackgroundColor:
-                    AppColors.orange.withValues(alpha: 0.5),
-                shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(14)),
-                elevation: 0,
+      error: (_, _) => Scaffold(
+        backgroundColor: AppColors.surface,
+        appBar: AppBar(
+          leading: IconButton(
+            icon: const Icon(Icons.arrow_back_rounded),
+            onPressed: () => context.pop(),
+          ),
+        ),
+        body: Center(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Icon(Icons.error_outline_rounded,
+                  size: 48, color: AppColors.error),
+              const SizedBox(height: 16),
+              Text(
+                'Could not load course details',
+                style: GoogleFonts.inter(
+                    fontSize: 16, color: AppColors.textPrimary),
               ),
-              child: _isProcessing
-                  ? const SizedBox(
-                      height: 22,
-                      width: 22,
-                      child: CircularProgressIndicator(
-                          strokeWidth: 2.5, color: AppColors.white),
-                    )
-                  : Text(
-                      'Pay ₹${widget.price.toStringAsFixed(0)}',
-                      style: GoogleFonts.inter(
-                          fontSize: 16, fontWeight: FontWeight.w600),
-                    ),
-            ),
+              const SizedBox(height: 8),
+              TextButton(
+                onPressed: () =>
+                    ref.invalidate(courseDetailProvider(widget.courseId)),
+                child: const Text('Retry'),
+              ),
+            ],
           ),
         ),
       ),

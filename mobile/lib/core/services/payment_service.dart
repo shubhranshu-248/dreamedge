@@ -1,70 +1,76 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import '../models/order.dart';
+
 class PaymentService {
   final SupabaseClient _supabase = Supabase.instance.client;
 
-  String get _userId => _supabase.auth.currentUser!.id;
+  Future<String> _currentStudentId() async {
+    final userId = _supabase.auth.currentUser?.id;
+    if (userId == null) throw Exception('Not authenticated');
 
-  String? get userEmail => _supabase.auth.currentUser?.email;
+    final row = await _supabase
+        .from('students')
+        .select('id')
+        .eq('user_id', userId)
+        .single();
 
-  Future<Map<String, dynamic>> createOrder({
-    required String courseId,
-    required double amount,
-    String currency = 'INR',
-  }) async {
-    final receipt = 'rcpt_${DateTime.now().millisecondsSinceEpoch}';
-
-    final response = await _supabase.from('orders').insert({
-      'user_id': _userId,
-      'course_id': courseId,
-      'amount': amount,
-      'currency': currency,
-      'status': 'pending',
-      'receipt': receipt,
-    }).select().single();
-
-    return response;
+    return row['id'] as String;
   }
 
-  Future<void> completeOrder({
+  Future<Map<String, dynamic>> createRazorpayOrder({
+    required String courseId,
+  }) async {
+    final response = await _supabase.functions.invoke(
+      'create-razorpay-order',
+      body: {'course_id': courseId},
+    );
+
+    if (response.status != 200) {
+      final body = response.data;
+      final message = body is Map
+          ? body['error'] ?? 'Order creation failed'
+          : 'Order creation failed';
+      throw Exception(message.toString());
+    }
+
+    return response.data as Map<String, dynamic>;
+  }
+
+  Future<Map<String, dynamic>> verifyPayment({
     required String orderId,
+    required String razorpayOrderId,
     required String razorpayPaymentId,
     required String razorpaySignature,
-    String? razorpayOrderId,
   }) async {
-    await _supabase.from('orders').update({
-      'status': 'completed',
-      'razorpay_payment_id': razorpayPaymentId,
-      'razorpay_signature': razorpaySignature,
-      'razorpay_order_id': razorpayOrderId,
-      'updated_at': DateTime.now().toIso8601String(),
-    }).eq('id', orderId);
-  }
+    final response = await _supabase.functions.invoke(
+      'verify-razorpay-payment',
+      body: {
+        'order_id': orderId,
+        'razorpay_order_id': razorpayOrderId,
+        'razorpay_payment_id': razorpayPaymentId,
+        'razorpay_signature': razorpaySignature,
+      },
+    );
 
-  Future<void> failOrder(String orderId) async {
-    await _supabase.from('orders').update({
-      'status': 'failed',
-      'updated_at': DateTime.now().toIso8601String(),
-    }).eq('id', orderId);
-  }
+    if (response.status != 200) {
+      final body = response.data;
+      final message = body is Map
+          ? body['error'] ?? 'Verification failed'
+          : 'Verification failed';
+      throw Exception(message.toString());
+    }
 
-  Future<void> enrollUser({
-    required String courseId,
-    required String orderId,
-  }) async {
-    await _supabase.from('enrollments').upsert({
-      'user_id': _userId,
-      'course_id': courseId,
-      'order_id': orderId,
-      'status': 'active',
-    }, onConflict: 'user_id,course_id');
+    return response.data as Map<String, dynamic>;
   }
 
   Future<bool> isEnrolled(String courseId) async {
+    final studentId = await _currentStudentId();
+
     final response = await _supabase
         .from('enrollments')
         .select('id')
-        .eq('user_id', _userId)
+        .eq('student_id', studentId)
         .eq('course_id', courseId)
         .eq('status', 'active')
         .maybeSingle();
@@ -72,23 +78,17 @@ class PaymentService {
     return response != null;
   }
 
-  Future<List<Map<String, dynamic>>> getOrderHistory() async {
+  Future<List<CourseOrder>> getOrderHistory() async {
+    final studentId = await _currentStudentId();
+
     final response = await _supabase
         .from('orders')
-        .select()
-        .eq('user_id', _userId)
+        .select('*, courses(name, thumbnail_url)')
+        .eq('student_id', studentId)
         .order('created_at', ascending: false);
 
-    return List<Map<String, dynamic>>.from(response);
-  }
-
-  Future<Map<String, dynamic>?> getOrderById(String orderId) async {
-    final response = await _supabase
-        .from('orders')
-        .select()
-        .eq('id', orderId)
-        .maybeSingle();
-
-    return response;
+    return (response as List)
+        .map((row) => CourseOrder.fromJson(row as Map<String, dynamic>))
+        .toList();
   }
 }

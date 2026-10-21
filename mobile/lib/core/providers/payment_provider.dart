@@ -9,8 +9,7 @@ final paymentServiceProvider = Provider<PaymentService>((ref) {
 
 final orderHistoryProvider = FutureProvider<List<CourseOrder>>((ref) async {
   final service = ref.read(paymentServiceProvider);
-  final data = await service.getOrderHistory();
-  return data.map((json) => CourseOrder.fromJson(json)).toList();
+  return service.getOrderHistory();
 });
 
 final isEnrolledProvider =

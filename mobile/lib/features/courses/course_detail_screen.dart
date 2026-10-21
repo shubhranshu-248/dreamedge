@@ -367,12 +367,7 @@ class _EnrollButtonState extends ConsumerState<_EnrollButton> {
             width: double.infinity,
             child: ElevatedButton(
               onPressed: () {
-                context.push('/checkout', extra: {
-                  'courseId': widget.courseId,
-                  'courseName': widget.courseName,
-                  'price': widget.price,
-                  'thumbnailUrl': widget.thumbnailUrl,
-                });
+                context.push('/checkout/${widget.courseId}');
               },
               child: Text('Buy Now — ₹${widget.price.toInt()}'),
             ),
@@ -416,12 +411,7 @@ class _EnrollButtonState extends ConsumerState<_EnrollButton> {
         child: ElevatedButton(
           onPressed: widget.price > 0
               ? () {
-                  context.push('/checkout', extra: {
-                    'courseId': widget.courseId,
-                    'courseName': widget.courseName,
-                    'price': widget.price,
-                    'thumbnailUrl': widget.thumbnailUrl,
-                  });
+                  context.push('/checkout/${widget.courseId}');
                 }
               : (_enrolling ? null : _enroll),
           child: widget.price > 0

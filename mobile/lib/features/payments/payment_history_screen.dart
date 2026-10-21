@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:shimmer/shimmer.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../../core/models/order.dart';
 import '../../core/providers/payment_provider.dart';
@@ -123,81 +124,157 @@ class PaymentHistoryScreen extends ConsumerWidget {
   }
 }
 
-class _OrderTile extends StatelessWidget {
+class _OrderTile extends StatefulWidget {
   final CourseOrder order;
 
   const _OrderTile({required this.order});
 
   @override
+  State<_OrderTile> createState() => _OrderTileState();
+}
+
+class _OrderTileState extends State<_OrderTile> {
+  bool _expanded = false;
+
+  @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: AppColors.white,
-        borderRadius: BorderRadius.circular(12),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.04),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: Row(
-        children: [
-          Container(
-            width: 44,
-            height: 44,
-            decoration: BoxDecoration(
-              color: _statusColor.withValues(alpha: 0.1),
-              borderRadius: BorderRadius.circular(10),
+    final order = widget.order;
+
+    return GestureDetector(
+      onTap: () => setState(() => _expanded = !_expanded),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        padding: const EdgeInsets.all(14),
+        decoration: BoxDecoration(
+          color: AppColors.white,
+          borderRadius: BorderRadius.circular(12),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.04),
+              blurRadius: 8,
+              offset: const Offset(0, 2),
             ),
-            child: Icon(_statusIcon, color: _statusColor, size: 22),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+          ],
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
               children: [
-                Text(
-                  order.formattedAmount,
-                  style: GoogleFonts.inter(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w600,
-                    color: AppColors.textPrimary,
+                Container(
+                  width: 44,
+                  height: 44,
+                  decoration: BoxDecoration(
+                    color: _statusColor.withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: Icon(_statusIcon, color: _statusColor, size: 22),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        order.courseName ?? order.formattedAmount,
+                        style: GoogleFonts.inter(
+                          fontSize: 15,
+                          fontWeight: FontWeight.w600,
+                          color: AppColors.textPrimary,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      const SizedBox(height: 3),
+                      Text(
+                        '${order.formattedAmount}  •  ${order.formattedDate}',
+                        style: GoogleFonts.inter(
+                            fontSize: 12, color: AppColors.textSecondary),
+                      ),
+                    ],
                   ),
                 ),
-                const SizedBox(height: 3),
-                Text(
-                  order.formattedDate,
-                  style: GoogleFonts.inter(
-                      fontSize: 12, color: AppColors.textSecondary),
+                const SizedBox(width: 8),
+                Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: _statusColor.withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Text(
+                    order.statusLabel,
+                    style: GoogleFonts.inter(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                      color: _statusColor,
+                    ),
+                  ),
                 ),
               ],
             ),
-          ),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-            decoration: BoxDecoration(
-              color: _statusColor.withValues(alpha: 0.1),
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: Text(
-              order.statusLabel,
+            if (_expanded) ...[
+              const SizedBox(height: 12),
+              const Divider(height: 1),
+              const SizedBox(height: 12),
+              _detailRow('Payment Method', order.paymentMethod),
+              if (order.razorpayPaymentId != null)
+                _detailRow('Payment ID', order.razorpayPaymentId!),
+              if (order.discountAmount > 0)
+                _detailRow(
+                    'Discount', '₹${order.discountAmount.toStringAsFixed(0)}'),
+              if (order.invoiceUrl != null)
+                Padding(
+                  padding: const EdgeInsets.only(top: 8),
+                  child: SizedBox(
+                    width: double.infinity,
+                    child: OutlinedButton.icon(
+                      onPressed: () async {
+                        final uri = Uri.parse(order.invoiceUrl!);
+                        if (await canLaunchUrl(uri)) {
+                          await launchUrl(uri,
+                              mode: LaunchMode.externalApplication);
+                        }
+                      },
+                      icon: const Icon(Icons.receipt_long_rounded, size: 18),
+                      label: const Text('Download Invoice'),
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: AppColors.orange,
+                        side: const BorderSide(color: AppColors.orange),
+                        shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(8)),
+                      ),
+                    ),
+                  ),
+                ),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _detailRow(String label, String value) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 6),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Text(label,
               style: GoogleFonts.inter(
-                fontSize: 12,
-                fontWeight: FontWeight.w600,
-                color: _statusColor,
-              ),
-            ),
-          ),
+                  fontSize: 13, color: AppColors.textSecondary)),
+          Text(value,
+              style: GoogleFonts.inter(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w500,
+                  color: AppColors.textPrimary)),
         ],
       ),
     );
   }
 
   Color get _statusColor {
-    switch (order.status) {
+    switch (widget.order.status) {
       case 'completed':
         return AppColors.success;
       case 'failed':
@@ -210,7 +287,7 @@ class _OrderTile extends StatelessWidget {
   }
 
   IconData get _statusIcon {
-    switch (order.status) {
+    switch (widget.order.status) {
       case 'completed':
         return Icons.check_circle_rounded;
       case 'failed':

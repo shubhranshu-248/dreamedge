@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../config/constants.dart';
@@ -51,6 +52,11 @@ class ProfileScreen extends ConsumerWidget {
             icon: Icons.person_outline,
             title: 'Edit Profile',
             onTap: () {},
+          ),
+          _MenuItem(
+            icon: Icons.receipt_long_outlined,
+            title: 'Payment History',
+            onTap: () => context.push('/payment-history'),
           ),
           _MenuItem(
             icon: Icons.emoji_events_outlined,

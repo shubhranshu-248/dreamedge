@@ -2,71 +2,71 @@ import 'package:intl/intl.dart';
 
 class CourseOrder {
   final String id;
-  final String userId;
+  final String studentId;
   final String courseId;
   final double amount;
-  final String currency;
+  final double discountAmount;
+  final double finalAmount;
+  final String paymentMethod;
   final String status;
   final String? razorpayOrderId;
   final String? razorpayPaymentId;
   final String? razorpaySignature;
-  final String? paymentMethod;
-  final String? receipt;
-  final Map<String, dynamic> notes;
+  final String? invoiceUrl;
+  final String? invoiceNumber;
+  final String? referralCodeUsed;
+  final String? remarks;
   final DateTime createdAt;
   final DateTime updatedAt;
+  final String? courseName;
+  final String? courseThumbnailUrl;
 
   const CourseOrder({
     required this.id,
-    required this.userId,
+    required this.studentId,
     required this.courseId,
     required this.amount,
-    required this.currency,
+    required this.discountAmount,
+    required this.finalAmount,
+    required this.paymentMethod,
     required this.status,
     this.razorpayOrderId,
     this.razorpayPaymentId,
     this.razorpaySignature,
-    this.paymentMethod,
-    this.receipt,
-    this.notes = const {},
+    this.invoiceUrl,
+    this.invoiceNumber,
+    this.referralCodeUsed,
+    this.remarks,
     required this.createdAt,
     required this.updatedAt,
+    this.courseName,
+    this.courseThumbnailUrl,
   });
 
   factory CourseOrder.fromJson(Map<String, dynamic> json) {
+    final courseData = json['courses'] as Map<String, dynamic>?;
+
     return CourseOrder(
       id: json['id'] as String,
-      userId: json['user_id'] as String,
+      studentId: json['student_id'] as String,
       courseId: json['course_id'] as String,
       amount: (json['amount'] as num).toDouble(),
-      currency: json['currency'] as String? ?? 'INR',
+      discountAmount: (json['discount_amount'] as num? ?? 0).toDouble(),
+      finalAmount: (json['final_amount'] as num).toDouble(),
+      paymentMethod: json['payment_method'] as String? ?? 'razorpay',
       status: json['status'] as String? ?? 'pending',
       razorpayOrderId: json['razorpay_order_id'] as String?,
       razorpayPaymentId: json['razorpay_payment_id'] as String?,
       razorpaySignature: json['razorpay_signature'] as String?,
-      paymentMethod: json['payment_method'] as String?,
-      receipt: json['receipt'] as String?,
-      notes: json['notes'] as Map<String, dynamic>? ?? {},
+      invoiceUrl: json['invoice_url'] as String?,
+      invoiceNumber: json['invoice_number'] as String?,
+      referralCodeUsed: json['referral_code_used'] as String?,
+      remarks: json['remarks'] as String?,
       createdAt: DateTime.parse(json['created_at'] as String),
       updatedAt: DateTime.parse(json['updated_at'] as String),
+      courseName: courseData?['name'] as String?,
+      courseThumbnailUrl: courseData?['thumbnail_url'] as String?,
     );
-  }
-
-  Map<String, dynamic> toJson() {
-    return {
-      'id': id,
-      'user_id': userId,
-      'course_id': courseId,
-      'amount': amount,
-      'currency': currency,
-      'status': status,
-      'razorpay_order_id': razorpayOrderId,
-      'razorpay_payment_id': razorpayPaymentId,
-      'razorpay_signature': razorpaySignature,
-      'payment_method': paymentMethod,
-      'receipt': receipt,
-      'notes': notes,
-    };
   }
 
   bool get isPending => status == 'pending';
@@ -77,7 +77,7 @@ class CourseOrder {
   String get formattedAmount {
     final formatter =
         NumberFormat.currency(locale: 'en_IN', symbol: '₹', decimalDigits: 0);
-    return formatter.format(amount);
+    return formatter.format(finalAmount);
   }
 
   String get formattedDate {

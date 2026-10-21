@@ -106,16 +106,10 @@ final routerProvider = Provider<GoRouter>((ref) {
         builder: (context, state) => const NotificationInboxScreen(),
       ),
       GoRoute(
-        path: '/checkout',
-        builder: (context, state) {
-          final extra = state.extra as Map<String, dynamic>;
-          return CheckoutScreen(
-            courseId: extra['courseId'] as String,
-            courseName: extra['courseName'] as String,
-            price: extra['price'] as double,
-            thumbnailUrl: extra['thumbnailUrl'] as String?,
-          );
-        },
+        path: '/checkout/:courseId',
+        builder: (context, state) => CheckoutScreen(
+          courseId: state.pathParameters['courseId']!,
+        ),
       ),
       GoRoute(
         path: '/payment-history',
