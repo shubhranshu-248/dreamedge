@@ -1,7 +1,8 @@
-// Binds to courses DDL: 20261012000000_initial_schema.sql
+// Binds to LIVE courses DDL (hybrid of initial + courses_table migrations)
 // Courses columns used: validity_days (int, default 365)
 // Enrollments columns: student_id, course_id, payment_id (uuid), status, purchased_at, valid_until
 // Orders columns: id, student_id, course_id, status, razorpay_order_id, razorpay_payment_id, razorpay_signature
+// RPC: increment_student_count (targets student_count column)
 
 import { serve } from 'https://deno.land/std@0.177.0/http/server.ts'
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.39.0'
@@ -116,8 +117,8 @@ async function completeOrder(
     return { enrolled: false, order_id: orderId, error: 'Enrollment failed, webhook will retry' }
   }
 
-  await serviceClient.rpc('increment_total_students', { p_course_id: order.course_id }).catch(
-    (err: unknown) => console.error('increment_total_students error:', err)
+  await serviceClient.rpc('increment_student_count', { p_course_id: order.course_id }).catch(
+    (err: unknown) => console.error('increment_student_count error:', err)
   )
 
   return { enrolled: true, order_id: orderId, enrollment_id: enrollment?.id }

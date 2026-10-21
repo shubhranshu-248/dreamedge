@@ -118,7 +118,7 @@ class CourseCard extends StatelessWidget {
       children: [
         if (course.hasDiscount) ...[
           Text(
-            course.formattedDiscountPrice,
+            course.formattedPrice,
             style: AppTypography.bodyLarge.copyWith(
               fontWeight: FontWeight.w700,
               color: AppColors.textPrimary,
@@ -126,7 +126,7 @@ class CourseCard extends StatelessWidget {
           ),
           const SizedBox(width: 6),
           Text(
-            course.formattedPrice,
+            course.formattedOriginalPrice,
             style: AppTypography.bodySmall.copyWith(
               decoration: TextDecoration.lineThrough,
               color: AppColors.gray,

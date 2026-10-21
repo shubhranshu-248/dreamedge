@@ -14,21 +14,29 @@ CREATE TABLE IF NOT EXISTS lessons (
   updated_at TIMESTAMPTZ DEFAULT now()
 );
 
-CREATE INDEX idx_lessons_course_id ON lessons(course_id);
-CREATE INDEX idx_lessons_sort_order ON lessons(course_id, sort_order);
+CREATE INDEX IF NOT EXISTS idx_lessons_course_id ON lessons(course_id);
+CREATE INDEX IF NOT EXISTS idx_lessons_sort_order ON lessons(course_id, sort_order);
 
 ALTER TABLE lessons ENABLE ROW LEVEL SECURITY;
 
-CREATE POLICY "lessons_select_published"
-  ON lessons FOR SELECT
-  TO anon, authenticated
-  USING (is_published = true);
+DO $$ BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE policyname = 'lessons_select_published' AND tablename = 'lessons') THEN
+    CREATE POLICY "lessons_select_published"
+      ON lessons FOR SELECT
+      TO anon, authenticated
+      USING (is_published = true);
+  END IF;
+END $$;
 
-CREATE POLICY "lessons_service_all"
-  ON lessons FOR ALL
-  TO service_role
-  USING (true)
-  WITH CHECK (true);
+DO $$ BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE policyname = 'lessons_service_all' AND tablename = 'lessons') THEN
+    CREATE POLICY "lessons_service_all"
+      ON lessons FOR ALL
+      TO service_role
+      USING (true)
+      WITH CHECK (true);
+  END IF;
+END $$;
 
 -- Student progress table
 CREATE TABLE IF NOT EXISTS student_progress (
@@ -44,29 +52,43 @@ CREATE TABLE IF NOT EXISTS student_progress (
   updated_at TIMESTAMPTZ DEFAULT now()
 );
 
-CREATE UNIQUE INDEX idx_progress_student_lesson
-  ON student_progress(student_id, lesson_id);
-CREATE INDEX idx_progress_student_id
+DO $$ BEGIN
+  IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'student_progress' AND column_name = 'lesson_id') THEN
+    CREATE UNIQUE INDEX IF NOT EXISTS idx_progress_student_lesson ON student_progress(student_id, lesson_id);
+  END IF;
+END $$;
+CREATE INDEX IF NOT EXISTS idx_progress_student_id
   ON student_progress(student_id);
-CREATE INDEX idx_progress_course_id
-  ON student_progress(student_id, course_id);
+DO $$ BEGIN
+  IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'student_progress' AND column_name = 'course_id') THEN
+    CREATE INDEX IF NOT EXISTS idx_progress_course_id ON student_progress(student_id, course_id);
+  END IF;
+END $$;
 
 ALTER TABLE student_progress ENABLE ROW LEVEL SECURITY;
 
-CREATE POLICY "progress_select_own"
-  ON student_progress FOR SELECT
-  TO authenticated
-  USING (
-    student_id IN (
-      SELECT id FROM students WHERE user_id = auth.uid()
-    )
-  );
+DO $$ BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE policyname = 'progress_select_own' AND tablename = 'student_progress') THEN
+    CREATE POLICY "progress_select_own"
+      ON student_progress FOR SELECT
+      TO authenticated
+      USING (
+        student_id IN (
+          SELECT id FROM students WHERE user_id = auth.uid()
+        )
+      );
+  END IF;
+END $$;
 
-CREATE POLICY "progress_service_all"
-  ON student_progress FOR ALL
-  TO service_role
-  USING (true)
-  WITH CHECK (true);
+DO $$ BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE policyname = 'progress_service_all' AND tablename = 'student_progress') THEN
+    CREATE POLICY "progress_service_all"
+      ON student_progress FOR ALL
+      TO service_role
+      USING (true)
+      WITH CHECK (true);
+  END IF;
+END $$;
 
 -- Updated_at triggers
 CREATE OR REPLACE FUNCTION update_lessons_updated_at()
@@ -74,6 +96,7 @@ RETURNS TRIGGER AS $$
 BEGIN NEW.updated_at = now(); RETURN NEW; END;
 $$ LANGUAGE plpgsql;
 
+DROP TRIGGER IF EXISTS lessons_updated_at ON lessons;
 CREATE TRIGGER lessons_updated_at
   BEFORE UPDATE ON lessons
   FOR EACH ROW EXECUTE FUNCTION update_lessons_updated_at();
@@ -83,6 +106,7 @@ RETURNS TRIGGER AS $$
 BEGIN NEW.updated_at = now(); RETURN NEW; END;
 $$ LANGUAGE plpgsql;
 
+DROP TRIGGER IF EXISTS progress_updated_at ON student_progress;
 CREATE TRIGGER progress_updated_at
   BEFORE UPDATE ON student_progress
   FOR EACH ROW EXECUTE FUNCTION update_progress_updated_at();

@@ -223,9 +223,8 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
 
     return courseAsync.when(
       data: (course) {
-        final price = course.discountPrice ?? course.price;
-        final hasDiscount =
-            course.discountPrice != null && course.discountPrice! < course.price;
+        final price = course.price;
+        final hasDiscount = course.hasDiscount;
 
         return Scaffold(
           backgroundColor: AppColors.surface,
@@ -338,7 +337,7 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
                   child: Column(
                     children: [
                       _buildSummaryRow('Course Price',
-                          '₹${course.price.toStringAsFixed(0)}'),
+                          '₹${(hasDiscount ? course.originalPrice! : course.price).toStringAsFixed(0)}'),
                       const Padding(
                         padding: EdgeInsets.symmetric(vertical: 12),
                         child: Divider(height: 1),
@@ -346,7 +345,7 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
                       _buildSummaryRow(
                         'Discount',
                         hasDiscount
-                            ? '-₹${(course.price - price).toStringAsFixed(0)}'
+                            ? '-₹${(course.originalPrice! - course.price).toStringAsFixed(0)}'
                             : '₹0',
                         isSecondary: true,
                       ),

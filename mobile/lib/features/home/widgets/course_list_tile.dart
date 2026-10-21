@@ -74,7 +74,7 @@ class CourseListTile extends StatelessWidget {
                     children: [
                       if (course.hasDiscount) ...[
                         Text(
-                          course.formattedDiscountPrice,
+                          course.formattedPrice,
                           style: AppTypography.bodyMedium.copyWith(
                             fontWeight: FontWeight.w700,
                             color: AppColors.textPrimary,
@@ -82,7 +82,7 @@ class CourseListTile extends StatelessWidget {
                         ),
                         const SizedBox(width: 4),
                         Text(
-                          course.formattedPrice,
+                          course.formattedOriginalPrice,
                           style: AppTypography.caption.copyWith(
                             decoration: TextDecoration.lineThrough,
                             color: AppColors.gray,

@@ -10,15 +10,15 @@ as $$
   select id from students where user_id = auth.uid()
 $$;
 
--- Fix: increment_total_students targeting the correct column name
-create or replace function increment_total_students(p_course_id uuid)
+-- RPC: increment student_count on courses after successful enrollment
+create or replace function increment_student_count(p_course_id uuid)
 returns void
 language plpgsql
 security definer
 as $$
 begin
   update courses
-  set total_students = coalesce(total_students, 0) + 1
+  set student_count = coalesce(student_count, 0) + 1
   where id = p_course_id;
 end;
 $$;

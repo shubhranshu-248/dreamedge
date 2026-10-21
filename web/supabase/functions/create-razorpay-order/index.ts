@@ -1,6 +1,6 @@
-// Binds to courses DDL: 20261012000000_initial_schema.sql
-// Columns used: id, name, price, discount_price, validity_days, status (content_status enum)
-// Column: total_students (int, not student_count)
+// Binds to LIVE courses DDL (hybrid of initial + courses_table migrations)
+// Columns used: id, title, price, original_price, validity_days, status (content_status enum)
+// Column: student_count (int, not total_students)
 
 import { serve } from 'https://deno.land/std@0.177.0/http/server.ts'
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.39.0'
@@ -76,7 +76,7 @@ serve(async (req) => {
 
     const { data: course, error: courseError } = await serviceClient
       .from('courses')
-      .select('id, name, price, discount_price, validity_days, status')
+      .select('id, title, price, original_price, validity_days, status')
       .eq('id', course_id)
       .single()
 
@@ -109,8 +109,8 @@ serve(async (req) => {
       })
     }
 
-    const finalAmount: number = course.discount_price ?? course.price
-    const discountAmount: number = course.price - finalAmount
+    const finalAmount: number = course.price
+    const discountAmount: number = (course.original_price ?? course.price) - finalAmount
 
     const fifteenMinAgo = new Date(Date.now() - 15 * 60 * 1000).toISOString()
     const { data: pendingOrder } = await serviceClient

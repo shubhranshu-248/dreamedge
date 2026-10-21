@@ -10,12 +10,12 @@ void main() {
       'subtitle': 'Complete CBSE Syllabus',
       'description': 'Master mathematics with detailed explanations.',
       'thumbnail_url': 'https://example.com/math.jpg',
-      'target_class': '10',
-      'price': 999,
-      'discount_price': 799,
+      'class': '10',
+      'price': 799,
+      'original_price': 999,
       'status': 'published',
       'is_featured': true,
-      'enrollment_count': 150,
+      'student_count': 150,
       'total_lessons': 45,
       'duration_minutes': 750,
       'created_at': '2025-01-01T00:00:00Z',
@@ -32,8 +32,8 @@ void main() {
       expect(course.description, 'Master mathematics with detailed explanations.');
       expect(course.thumbnailUrl, 'https://example.com/math.jpg');
       expect(course.targetClass, '10');
-      expect(course.price, 999);
-      expect(course.discountPrice, 799);
+      expect(course.price, 799);
+      expect(course.originalPrice, 999);
       expect(course.status, 'published');
       expect(course.isFeatured, true);
       expect(course.enrollmentCount, 150);
@@ -46,7 +46,7 @@ void main() {
         'id': 'c-002',
         'category_id': 'cat-sci',
         'title': 'Science Class 9',
-        'target_class': '9',
+        'class': '9',
         'price': 599,
         'status': 'draft',
         'created_at': '2025-01-01T00:00:00Z',
@@ -57,7 +57,7 @@ void main() {
       expect(course.subtitle, isNull);
       expect(course.description, isNull);
       expect(course.thumbnailUrl, isNull);
-      expect(course.discountPrice, isNull);
+      expect(course.originalPrice, isNull);
     });
 
     test('fromJson uses "name" as fallback for title', () {
@@ -108,29 +108,29 @@ void main() {
     });
 
     group('computed properties', () {
-      test('formattedPrice returns ₹999 format', () {
+      test('formattedPrice returns ₹799 format', () {
         final course = Course.fromJson(completeJson);
-        expect(course.formattedPrice, '₹999');
+        expect(course.formattedPrice, '₹799');
       });
 
-      test('formattedDiscountPrice returns ₹799 format', () {
+      test('formattedOriginalPrice returns ₹999 format', () {
         final course = Course.fromJson(completeJson);
-        expect(course.formattedDiscountPrice, '₹799');
+        expect(course.formattedOriginalPrice, '₹999');
       });
 
-      test('formattedDiscountPrice returns empty when no discount', () {
-        final json = {...completeJson, 'discount_price': null};
+      test('formattedOriginalPrice returns empty when no original price', () {
+        final json = {...completeJson, 'original_price': null};
         final course = Course.fromJson(json);
-        expect(course.formattedDiscountPrice, '');
+        expect(course.formattedOriginalPrice, '');
       });
 
-      test('hasDiscount returns true when discountPrice is less than price', () {
+      test('hasDiscount returns true when originalPrice is greater than price', () {
         final course = Course.fromJson(completeJson);
         expect(course.hasDiscount, true);
       });
 
-      test('hasDiscount returns false when discountPrice is null', () {
-        final json = {...completeJson, 'discount_price': null};
+      test('hasDiscount returns false when originalPrice is null', () {
+        final json = {...completeJson, 'original_price': null};
         final course = Course.fromJson(json);
         expect(course.hasDiscount, false);
       });
@@ -160,7 +160,7 @@ void main() {
       expect(roundTripped.id, original.id);
       expect(roundTripped.title, original.title);
       expect(roundTripped.price, original.price);
-      expect(roundTripped.discountPrice, original.discountPrice);
+      expect(roundTripped.originalPrice, original.originalPrice);
       expect(roundTripped.isFeatured, original.isFeatured);
       expect(roundTripped.enrollmentCount, original.enrollmentCount);
     });

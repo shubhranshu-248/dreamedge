@@ -7,7 +7,7 @@ class Course {
   final String? thumbnailUrl;
   final String targetClass;
   final double price;
-  final double? discountPrice;
+  final double? originalPrice;
   final String status;
   final bool isFeatured;
   final int enrollmentCount;
@@ -25,7 +25,7 @@ class Course {
     this.thumbnailUrl,
     required this.targetClass,
     required this.price,
-    this.discountPrice,
+    this.originalPrice,
     required this.status,
     required this.isFeatured,
     required this.enrollmentCount,
@@ -35,12 +35,12 @@ class Course {
     required this.updatedAt,
   });
 
-  bool get hasDiscount => discountPrice != null && discountPrice! < price;
+  bool get hasDiscount => originalPrice != null && originalPrice! > price;
 
   String get formattedPrice => '₹${price.toInt()}';
 
-  String get formattedDiscountPrice =>
-      discountPrice != null ? '₹${discountPrice!.toInt()}' : '';
+  String get formattedOriginalPrice =>
+      originalPrice != null ? '₹${originalPrice!.toInt()}' : '';
 
   String get formattedDuration {
     final hours = durationMinutes ~/ 60;
@@ -58,12 +58,12 @@ class Course {
       subtitle: json['subtitle'] as String?,
       description: json['description'] as String?,
       thumbnailUrl: json['thumbnail_url'] as String? ?? json['thumbnail'] as String?,
-      targetClass: json['target_class'] as String? ?? '',
+      targetClass: json['class'] as String? ?? json['target_class'] as String? ?? '',
       price: (json['price'] as num?)?.toDouble() ?? 0,
-      discountPrice: (json['discount_price'] as num?)?.toDouble(),
+      originalPrice: (json['original_price'] as num?)?.toDouble(),
       status: json['status'] as String? ?? 'draft',
       isFeatured: json['is_featured'] as bool? ?? false,
-      enrollmentCount: (json['enrollment_count'] as num?)?.toInt() ?? 0,
+      enrollmentCount: (json['student_count'] as num?)?.toInt() ?? (json['enrollment_count'] as num?)?.toInt() ?? 0,
       totalLessons: (json['total_lessons'] as num?)?.toInt() ?? 0,
       durationMinutes: (json['duration_minutes'] as num?)?.toInt() ?? 0,
       createdAt: DateTime.parse(
@@ -81,12 +81,12 @@ class Course {
       'subtitle': subtitle,
       'description': description,
       'thumbnail_url': thumbnailUrl,
-      'target_class': targetClass,
+      'class': targetClass,
       'price': price,
-      'discount_price': discountPrice,
+      'original_price': originalPrice,
       'status': status,
       'is_featured': isFeatured,
-      'enrollment_count': enrollmentCount,
+      'student_count': enrollmentCount,
       'total_lessons': totalLessons,
       'duration_minutes': durationMinutes,
       'created_at': createdAt.toIso8601String(),

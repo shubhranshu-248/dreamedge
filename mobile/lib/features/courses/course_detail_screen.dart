@@ -110,7 +110,7 @@ class CourseDetailScreen extends ConsumerWidget {
                       courseId: courseId,
                       isAuthenticated: isAuthenticated,
                       courseName: course.title,
-                      price: course.discountPrice ?? course.price,
+                      price: course.price,
                       thumbnailUrl: course.thumbnailUrl,
                     ),
                     if (course.description != null &&
@@ -253,7 +253,7 @@ class CourseDetailScreen extends ConsumerWidget {
       children: [
         if (course.hasDiscount) ...[
           Text(
-            course.formattedDiscountPrice,
+            course.formattedPrice,
             style: AppTypography.heading1.copyWith(
               color: AppColors.textPrimary,
               fontWeight: FontWeight.w800,
@@ -263,7 +263,7 @@ class CourseDetailScreen extends ConsumerWidget {
           Padding(
             padding: const EdgeInsets.only(bottom: 4),
             child: Text(
-              course.formattedPrice,
+              course.formattedOriginalPrice,
               style: AppTypography.bodyLarge.copyWith(
                 decoration: TextDecoration.lineThrough,
                 color: AppColors.gray,

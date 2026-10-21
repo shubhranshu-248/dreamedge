@@ -14,28 +14,36 @@ CREATE TABLE IF NOT EXISTS enrollments (
   updated_at TIMESTAMPTZ DEFAULT now()
 );
 
-CREATE UNIQUE INDEX idx_enrollments_student_course
+CREATE UNIQUE INDEX IF NOT EXISTS idx_enrollments_student_course
   ON enrollments(student_id, course_id);
-CREATE INDEX idx_enrollments_student_id ON enrollments(student_id);
-CREATE INDEX idx_enrollments_course_id ON enrollments(course_id);
-CREATE INDEX idx_enrollments_status ON enrollments(status);
+CREATE INDEX IF NOT EXISTS idx_enrollments_student_id ON enrollments(student_id);
+CREATE INDEX IF NOT EXISTS idx_enrollments_course_id ON enrollments(course_id);
+CREATE INDEX IF NOT EXISTS idx_enrollments_status ON enrollments(status);
 
 ALTER TABLE enrollments ENABLE ROW LEVEL SECURITY;
 
-CREATE POLICY "enrollments_select_own"
-  ON enrollments FOR SELECT
-  TO authenticated
-  USING (
-    student_id IN (
-      SELECT id FROM students WHERE user_id = auth.uid()
-    )
-  );
+DO $$ BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE policyname = 'enrollments_select_own' AND tablename = 'enrollments') THEN
+    CREATE POLICY "enrollments_select_own"
+      ON enrollments FOR SELECT
+      TO authenticated
+      USING (
+        student_id IN (
+          SELECT id FROM students WHERE user_id = auth.uid()
+        )
+      );
+  END IF;
+END $$;
 
-CREATE POLICY "enrollments_service_all"
-  ON enrollments FOR ALL
-  TO service_role
-  USING (true)
-  WITH CHECK (true);
+DO $$ BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE policyname = 'enrollments_service_all' AND tablename = 'enrollments') THEN
+    CREATE POLICY "enrollments_service_all"
+      ON enrollments FOR ALL
+      TO service_role
+      USING (true)
+      WITH CHECK (true);
+  END IF;
+END $$;
 
 CREATE OR REPLACE FUNCTION update_enrollments_updated_at()
 RETURNS TRIGGER AS $$
@@ -45,6 +53,7 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
+DROP TRIGGER IF EXISTS enrollments_updated_at ON enrollments;
 CREATE TRIGGER enrollments_updated_at
   BEFORE UPDATE ON enrollments
   FOR EACH ROW

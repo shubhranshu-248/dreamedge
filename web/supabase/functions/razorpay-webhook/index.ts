@@ -1,7 +1,8 @@
-// Binds to courses DDL: 20261012000000_initial_schema.sql
+// Binds to LIVE courses DDL (hybrid of initial + courses_table migrations)
 // Courses columns used: validity_days (int, default 365)
 // No CORS — direct POST from Razorpay servers
 // No JWT — verify_jwt = false in config.toml; authenticates via X-Razorpay-Signature HMAC
+// RPC: increment_student_count (targets student_count column)
 
 import { serve } from 'https://deno.land/std@0.177.0/http/server.ts'
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.39.0'
@@ -110,8 +111,8 @@ serve(async (req) => {
         )
 
       await serviceClient
-        .rpc('increment_total_students', { p_course_id: order.course_id })
-        .catch((err: unknown) => console.error('increment_total_students error:', err))
+        .rpc('increment_student_count', { p_course_id: order.course_id })
+        .catch((err: unknown) => console.error('increment_student_count error:', err))
 
       return new Response(JSON.stringify({ status: 'completed' }), { status: 200 })
     }
