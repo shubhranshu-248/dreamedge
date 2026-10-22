@@ -3,6 +3,9 @@
 .env.local
 .env*.local
 
+# Local-only per CLAUDE.md section 4 (planning docs, evidence, screenshots)
+/docs/
+
 # Node
 node_modules/
 

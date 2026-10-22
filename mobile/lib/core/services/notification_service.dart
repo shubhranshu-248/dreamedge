@@ -62,15 +62,19 @@ class NotificationService {
     final user = Supabase.instance.client.auth.currentUser;
     if (user == null) return;
 
-    await Supabase.instance.client.from('device_tokens').upsert(
-      {
-        'user_id': user.id,
-        'token': token,
-        'platform': 'android',
-        'updated_at': DateTime.now().toIso8601String(),
-      },
-      onConflict: 'user_id,token',
-    );
+    try {
+      await Supabase.instance.client.from('device_tokens').upsert(
+        {
+          'user_id': user.id,
+          'token': token,
+          'platform': 'android',
+          'updated_at': DateTime.now().toIso8601String(),
+        },
+        onConflict: 'user_id,token',
+      );
+    } catch (e) {
+      debugPrint('device_tokens upsert failed (non-fatal): $e');
+    }
   }
 
   void _handleForegroundMessage(RemoteMessage message) {

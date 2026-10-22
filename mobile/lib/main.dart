@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
@@ -27,7 +29,8 @@ void main() async {
     publishableKey: AppConfig.supabaseAnonKey,
   );
 
-  await NotificationService().initialize();
+  // Fire-and-forget: notification registration must never block app startup.
+  unawaited(NotificationService().initialize());
 
   final prefs = await SharedPreferences.getInstance();
 
