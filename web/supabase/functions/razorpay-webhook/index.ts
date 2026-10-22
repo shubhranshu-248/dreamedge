@@ -102,6 +102,18 @@ serve(async (req) => {
       const validUntil = new Date()
       validUntil.setDate(validUntil.getDate() + validityDays)
 
+      // Only increment the counter when the enrollment is actually new, so
+      // the webhook doesn't double-count a payment the client verify already
+      // settled.
+      const { data: existingEnrollment } = await serviceClient
+        .from('enrollments')
+        .select('id')
+        .eq('student_id', order.student_id)
+        .eq('course_id', order.course_id)
+        .maybeSingle()
+
+      const isNewEnrollment = !existingEnrollment
+
       await serviceClient
         .from('enrollments')
         .upsert(
@@ -116,9 +128,17 @@ serve(async (req) => {
           { onConflict: 'student_id,course_id' }
         )
 
-      await serviceClient
-        .rpc('increment_student_count', { p_course_id: order.course_id })
-        .catch((err: unknown) => console.error('increment_student_count error:', err))
+      if (isNewEnrollment) {
+        // supabase-js RPC errors do NOT throw — they land in `error`, so a
+        // `.catch()` here is a no-op. Read `error` directly instead.
+        const { error: rpcError } = await serviceClient.rpc(
+          'increment_student_count',
+          { p_course_id: order.course_id }
+        )
+        if (rpcError) {
+          console.error('increment_student_count error:', rpcError)
+        }
+      }
 
       return new Response(JSON.stringify({ status: 'completed' }), { status: 200 })
     }

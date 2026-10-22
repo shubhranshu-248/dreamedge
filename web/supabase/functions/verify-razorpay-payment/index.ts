@@ -104,6 +104,18 @@ async function completeOrder(
   const validUntil = new Date()
   validUntil.setDate(validUntil.getDate() + validityDays)
 
+  // Only count a new enrollment when the row didn't already exist, so the
+  // counter never double-fires if both the client verify and the webhook
+  // settle the same order.
+  const { data: existingEnrollment } = await serviceClient
+    .from('enrollments')
+    .select('id')
+    .eq('student_id', order.student_id)
+    .eq('course_id', order.course_id)
+    .maybeSingle()
+
+  const isNewEnrollment = !existingEnrollment
+
   const { data: enrollment, error: enrollError } = await serviceClient
     .from('enrollments')
     .upsert(
@@ -125,9 +137,18 @@ async function completeOrder(
     return { enrolled: false, order_id: orderId, error: 'Enrollment failed, webhook will retry' }
   }
 
-  await serviceClient.rpc('increment_student_count', { p_course_id: order.course_id }).catch(
-    (err: unknown) => console.error('increment_student_count error:', err)
-  )
+  if (isNewEnrollment) {
+    // supabase-js RPC errors do NOT throw — they land in `error`, so a
+    // `.catch()` on the promise is a no-op and the counter would silently
+    // stay flat. Read `error` directly instead.
+    const { error: rpcError } = await serviceClient.rpc(
+      'increment_student_count',
+      { p_course_id: order.course_id }
+    )
+    if (rpcError) {
+      console.error('increment_student_count error:', rpcError)
+    }
+  }
 
   return { enrolled: true, order_id: orderId, enrollment_id: enrollment?.id }
 }
