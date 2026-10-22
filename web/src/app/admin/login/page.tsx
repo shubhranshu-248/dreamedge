@@ -26,10 +26,7 @@ export default function AdminLoginPage() {
       <div className="w-full max-w-sm">
         {/* Logo & Brand */}
         <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-14 h-14 rounded-xl bg-brand-orange mb-4">
-            <span className="text-white font-bold text-xl tracking-tight">DE</span>
-          </div>
-          <h1 className="text-xl font-semibold text-white">Dream Edge</h1>
+          <img src="/logo.jpg" alt="Dream Edge" className="h-20 w-auto mx-auto mb-4" />
           <p className="text-sm text-brand-gray mt-1">Admin Panel</p>
         </div>
 

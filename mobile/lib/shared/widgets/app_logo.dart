@@ -1,7 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
-
-import '../theme/colors.dart';
 
 enum LogoSize { small, medium, large }
 
@@ -10,36 +7,23 @@ class AppLogo extends StatelessWidget {
 
   const AppLogo({super.key, this.size = LogoSize.medium});
 
-  double get _fontSize {
+  double get _height {
     switch (size) {
       case LogoSize.small:
-        return 24;
+        return 40;
       case LogoSize.medium:
-        return 32;
+        return 64;
       case LogoSize.large:
-        return 44;
+        return 96;
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    return RichText(
-      text: TextSpan(
-        style: GoogleFonts.playfairDisplay(
-          fontSize: _fontSize,
-          fontWeight: FontWeight.w700,
-        ),
-        children: const [
-          TextSpan(
-            text: 'Dream',
-            style: TextStyle(color: AppColors.black),
-          ),
-          TextSpan(
-            text: 'Edge',
-            style: TextStyle(color: AppColors.orange),
-          ),
-        ],
-      ),
+    return Image.asset(
+      'assets/images/logo.jpg',
+      height: _height,
+      fit: BoxFit.contain,
     );
   }
 }

@@ -145,13 +145,10 @@ export function AdminShell({
   const sidebarContent = (
     <>
       {/* Logo */}
-      <div className="flex items-center gap-3 px-4 py-5 border-b border-border">
-        <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-brand-orange">
-          <span className="text-white font-bold text-xs">DE</span>
-        </div>
+      <div className="flex items-center gap-3 px-4 py-4 border-b border-border">
+        <img src="/logo.jpg" alt="Dream Edge" className="h-9 w-auto" />
         <div className="flex-1 min-w-0">
-          <p className="text-base font-semibold truncate">Dream Edge</p>
-          <p className="text-sm text-muted-foreground">Admin</p>
+          <p className="text-sm text-muted-foreground">Admin Panel</p>
         </div>
       </div>
 

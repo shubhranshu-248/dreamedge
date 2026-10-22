@@ -58,9 +58,7 @@ export function Navbar() {
       <nav className="mx-auto flex h-20 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
         {/* Logo */}
         <Link href="/" className="flex items-center gap-2">
-          <span className="text-2xl font-bold tracking-tight">
-            Dream<span className="text-brand-orange">Edge</span>
-          </span>
+          <img src="/logo.jpg" alt="Dream Edge" className="h-12 w-auto" />
         </Link>
 
         {/* Desktop nav links */}
@@ -167,8 +165,8 @@ export function Navbar() {
           </SheetTrigger>
           <SheetContent side="right" className="w-72">
             <SheetHeader>
-              <SheetTitle className="text-left text-lg font-bold">
-                Dream<span className="text-brand-orange">Edge</span>
+              <SheetTitle className="text-left">
+                <img src="/logo.jpg" alt="Dream Edge" className="h-10 w-auto" />
               </SheetTitle>
             </SheetHeader>
             <div className="mt-6 flex flex-col gap-1">

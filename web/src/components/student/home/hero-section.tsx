@@ -50,18 +50,12 @@ export function HeroSection() {
         {/* Decorative illustration */}
         <div className="hidden flex-1 items-center justify-center md:flex">
           <div className="relative">
-            <div className="h-72 w-72 rounded-2xl border border-border bg-muted p-6 shadow-sm lg:h-80 lg:w-80">
-              <div className="flex h-full flex-col items-center justify-center gap-4 rounded-xl border border-border bg-background p-6">
-                <div className="text-5xl font-black text-brand-orange lg:text-6xl">
-                  DE
-                </div>
-                <div className="h-px w-16 bg-brand-orange/30" />
-                <p className="text-center text-sm font-medium text-muted-foreground">
-                  Basic Concept Se
-                  <br />
-                  Top Result TK
-                </p>
-              </div>
+            <div className="h-72 w-72 overflow-hidden rounded-2xl shadow-lg lg:h-80 lg:w-80">
+              <img
+                src="/logo.jpg"
+                alt="Dream Edge — Basic Concept Se Top Result TK"
+                className="h-full w-full object-contain"
+              />
             </div>
             <div className="absolute -bottom-4 -right-4 h-20 w-20 rounded-xl bg-brand-orange/10" />
             <div className="absolute -left-6 -top-6 h-16 w-16 rounded-full bg-brand-blue/10" />
