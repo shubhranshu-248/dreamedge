@@ -3,13 +3,9 @@
 .env.local
 .env*.local
 
-# Local-only per CLAUDE.md section 4 (planning docs, evidence, screenshots)
-# Explicit exceptions below are the minimum artifacts we publish as reference.
-/docs/*
-!/docs/step30-evidence/
-/docs/step30-evidence/*
-!/docs/step30-evidence/live_schema.sql
-!/docs/step30-evidence/razorpay_checkout.png
+# Local-only per CLAUDE.md section 4 (planning docs, evidence, screenshots).
+# Never publish anything under docs/ to GitHub.
+/docs/
 
 # Node
 node_modules/
