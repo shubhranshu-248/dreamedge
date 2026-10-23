@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { useState, useTransition } from "react";
 import Link from "next/link";
 import {
@@ -243,7 +244,6 @@ export function LearnContent({ course, lessons }: LearnContentProps) {
       : l.progress,
   }));
 
-  const completedCount = completedSet.size;
   const isCurrentCompleted = currentLesson
     ? completedSet.has(currentLesson.id)
     : false;
@@ -398,9 +398,11 @@ export function LearnContent({ course, lessons }: LearnContentProps) {
               {course.teacher_name && (
                 <div className="mt-6 flex items-center gap-3">
                   {course.teacher_avatar_url ? (
-                    <img
+                    <Image
                       src={course.teacher_avatar_url}
                       alt={course.teacher_name}
+                      width={36}
+                      height={36}
                       className="h-9 w-9 rounded-full object-cover"
                     />
                   ) : (

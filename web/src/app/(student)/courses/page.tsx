@@ -2,6 +2,9 @@ import type { Metadata } from "next";
 import { createClient } from "@/lib/supabase/server";
 import { CoursesListingContent } from "@/components/student/courses/courses-listing-content";
 import type { Course } from "@/types/course";
+import type { Database } from "@/types/supabase";
+
+type CourseRow = Database["public"]["Tables"]["courses"]["Row"];
 
 export const instant = false;
 
@@ -31,18 +34,32 @@ export default async function CoursesPage({ searchParams }: PageProps) {
       .order("created_at", { ascending: false });
 
     if (data) {
-      courses = (data as any[]).map((d) => ({
-        ...d,
-        price: Number(d.price ?? 0),
-        original_price: d.original_price != null ? Number(d.original_price) : null,
-        student_count: Number(d.student_count ?? 0),
-        rating_avg: d.rating_avg != null ? Number(d.rating_avg) : null,
-        rating_count: Number(d.rating_count ?? 0),
-        total_lessons: Number(d.total_lessons ?? 0),
-        duration_hours: d.duration_hours != null ? Number(d.duration_hours) : null,
-      })) as Course[];
-      classes = [...new Set(courses.map((c) => c.class).filter(Boolean))] as string[];
-      subjects = [...new Set(courses.map((c) => c.subject).filter(Boolean))] as string[];
+      courses = (data as CourseRow[]).map(
+        (d): Course => ({
+          ...d,
+          currency: d.currency ?? "INR",
+          total_lessons: Number(d.total_lessons ?? 0),
+          difficulty: d.difficulty ?? "medium",
+          is_published: d.is_published ?? true,
+          is_featured: d.is_featured ?? false,
+          student_count: Number(d.student_count ?? 0),
+          rating_count: Number(d.rating_count ?? 0),
+          created_at: d.created_at ?? new Date(0).toISOString(),
+          updated_at: d.updated_at ?? new Date(0).toISOString(),
+          price: Number(d.price ?? 0),
+          original_price:
+            d.original_price != null ? Number(d.original_price) : null,
+          rating_avg: d.rating_avg != null ? Number(d.rating_avg) : null,
+          duration_hours:
+            d.duration_hours != null ? Number(d.duration_hours) : null,
+        })
+      );
+      classes = Array.from(
+        new Set(courses.map((c) => c.class).filter((v): v is string => Boolean(v)))
+      );
+      subjects = Array.from(
+        new Set(courses.map((c) => c.subject).filter((v): v is string => Boolean(v)))
+      );
     }
   } catch {
     // Table may not exist yet — return empty

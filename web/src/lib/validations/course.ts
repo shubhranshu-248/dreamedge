@@ -1,11 +1,6 @@
 import { z } from "zod";
 
 const optionalString = z.string().optional().default("");
-const optionalUrl = z
-  .string()
-  .transform((v) => (v === "" ? undefined : v))
-  .pipe(z.string().url().optional());
-
 export const courseSchema = z
   .object({
     name: z

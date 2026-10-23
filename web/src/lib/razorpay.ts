@@ -1,10 +1,21 @@
+// Minimal Razorpay type surface — only what we touch here.
+// The checkout script attaches a global `Razorpay` constructor.
+declare global {
+  interface Window {
+    Razorpay?: new (options: Record<string, unknown>) => {
+      open: () => void;
+      close: () => void;
+    };
+  }
+}
+
 export function loadRazorpay(): Promise<boolean> {
   return new Promise((resolve) => {
     if (typeof window === "undefined") {
       resolve(false);
       return;
     }
-    if ((window as any).Razorpay) {
+    if (window.Razorpay) {
       resolve(true);
       return;
     }

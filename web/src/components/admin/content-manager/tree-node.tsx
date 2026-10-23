@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, memo } from "react";
+import { memo } from "react";
 import {
   ChevronRight,
   ChevronDown,
@@ -29,7 +29,6 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Badge } from "@/components/ui/badge";
 import type { TreeNode as TreeNodeType, NodeKind } from "@/stores/content-tree";
-import type { ContentType } from "@/types/database";
 
 const contentTypeIcons: Record<string, React.ElementType> = {
   video: Video,

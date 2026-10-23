@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useTransition, useCallback } from "react";
+import { useEffect, useState, useTransition } from "react";
 import {
   DndContext,
   closestCenter,
@@ -19,8 +19,6 @@ import { toast } from "sonner";
 import {
   Search,
   Plus,
-  ChevronDown,
-  ChevronsUpDown,
   FolderOpen,
   Loader2,
 } from "lucide-react";

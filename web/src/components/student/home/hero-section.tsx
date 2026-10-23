@@ -1,5 +1,4 @@
-"use client";
-
+import Image from "next/image";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { ArrowRight, Play } from "lucide-react";
@@ -50,11 +49,14 @@ export function HeroSection() {
         {/* Decorative illustration */}
         <div className="hidden flex-1 items-center justify-center md:flex">
           <div className="relative">
-            <div className="h-72 w-72 overflow-hidden rounded-2xl shadow-lg lg:h-80 lg:w-80">
-              <img
+            <div className="relative h-72 w-72 overflow-hidden rounded-2xl shadow-lg lg:h-80 lg:w-80">
+              <Image
                 src="/logo.jpg"
                 alt="Dream Edge — Basic Concept Se Top Result TK"
-                className="h-full w-full object-contain"
+                fill
+                sizes="(min-width: 1024px) 320px, 288px"
+                priority
+                className="object-contain"
               />
             </div>
             <div className="absolute -bottom-4 -right-4 h-20 w-20 rounded-xl bg-brand-orange/10" />

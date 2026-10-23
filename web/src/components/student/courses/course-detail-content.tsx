@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -136,8 +137,17 @@ export function CourseDetailContent({ course, isEnrolled = false }: CourseDetail
         },
       };
 
-      const rzp = new (window as any).Razorpay(options);
-      rzp.on("payment.failed", (response: any) => {
+      const Razorpay = window.Razorpay;
+      if (!Razorpay) {
+        toast.error("Payment library failed to load. Please refresh and try again.");
+        setEnrolling(false);
+        return;
+      }
+      const rzp = new Razorpay(options) as unknown as {
+        on: (event: "payment.failed", handler: (response: { error?: { description?: string } }) => void) => void;
+        open: () => void;
+      };
+      rzp.on("payment.failed", (response) => {
         toast.error("Payment failed", {
           description: response.error?.description || "Please try again.",
         });
@@ -278,10 +288,13 @@ export function CourseDetailContent({ course, isEnrolled = false }: CourseDetail
           {/* Thumbnail / Preview */}
           <div className="relative mt-8 aspect-video w-full overflow-hidden rounded-xl bg-gradient-to-br from-brand-orange/20 to-brand-blue/20">
             {course.thumbnail_url ? (
-              <img
+              <Image
                 src={course.thumbnail_url}
                 alt={course.title}
-                className="h-full w-full object-cover"
+                fill
+                sizes="(max-width: 1024px) 100vw, 66vw"
+                priority
+                className="object-cover"
               />
             ) : (
               <div className="flex h-full items-center justify-center">
@@ -343,12 +356,14 @@ export function CourseDetailContent({ course, isEnrolled = false }: CourseDetail
         <div className="lg:sticky lg:top-24 lg:self-start">
           <div className="overflow-hidden rounded-xl border border-border bg-card shadow-sm">
             {/* Card thumbnail */}
-            <div className="aspect-video w-full overflow-hidden bg-gradient-to-br from-brand-orange/20 to-brand-blue/20">
+            <div className="relative aspect-video w-full overflow-hidden bg-gradient-to-br from-brand-orange/20 to-brand-blue/20">
               {course.thumbnail_url ? (
-                <img
+                <Image
                   src={course.thumbnail_url}
                   alt={course.title}
-                  className="h-full w-full object-cover"
+                  fill
+                  sizes="(max-width: 1024px) 100vw, 33vw"
+                  className="object-cover"
                 />
               ) : (
                 <div className="flex h-full items-center justify-center">
@@ -443,9 +458,11 @@ export function CourseDetailContent({ course, isEnrolled = false }: CourseDetail
                 <div className="mt-6 border-t border-border pt-4">
                   <div className="flex items-center gap-3">
                     {course.teacher_avatar_url ? (
-                      <img
+                      <Image
                         src={course.teacher_avatar_url}
                         alt={course.teacher_name}
+                        width={40}
+                        height={40}
                         className="h-10 w-10 rounded-full object-cover"
                       />
                     ) : (

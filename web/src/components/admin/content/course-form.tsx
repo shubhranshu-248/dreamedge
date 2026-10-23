@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 import { useForm } from "react-hook-form";
@@ -56,8 +57,10 @@ export function CourseForm({ course, categories }: CourseFormProps) {
 
   const isEditing = Boolean(course);
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const form = useForm<CourseFormValues>({
+    // zod v4 + @hookform/resolvers has a known generic variance mismatch;
+    // the runtime resolver is correct, so cast through unknown.
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     resolver: zodResolver(courseSchema) as any,
     defaultValues: {
       name: course?.title || "",
@@ -86,8 +89,6 @@ export function CourseForm({ course, categories }: CourseFormProps) {
     formState: { errors },
   } = form;
 
-  const nameValue = watch("name");
-  const slugValue = watch("slug");
 
   function handleNameChange(e: React.ChangeEvent<HTMLInputElement>) {
     const name = e.target.value;
@@ -306,10 +307,12 @@ export function CourseForm({ course, categories }: CourseFormProps) {
             <div className="flex items-center gap-4">
               {thumbnailPreview ? (
                 <div className="relative h-24 w-40 overflow-hidden rounded-lg border">
-                  <img
+                  <Image
                     src={thumbnailPreview}
                     alt="Thumbnail preview"
-                    className="h-full w-full object-cover"
+                    fill
+                    sizes="160px"
+                    className="object-cover"
                   />
                 </div>
               ) : (

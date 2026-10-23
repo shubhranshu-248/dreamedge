@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { useState, useTransition, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
@@ -181,9 +182,11 @@ export function ProfileContent({ student }: { student: Student }) {
       <div className="mb-8 flex flex-col items-center text-center">
         <div className="relative">
           {student.avatar_url ? (
-            <img
+            <Image
               src={student.avatar_url}
               alt={student.full_name}
+              width={96}
+              height={96}
               className="h-24 w-24 rounded-full object-cover ring-2 ring-border"
             />
           ) : (

@@ -1,14 +1,17 @@
+// razorpay-webhook — called by Razorpay's servers on payment events.
+// Authenticated by HMAC over the raw request body (X-Razorpay-Signature),
+// no JWT (`verify_jwt = false` in config.toml).
+//
+// For payment.captured / order.paid: delegate the actual order
+// completion to the complete_paid_order RPC, which takes a row lock on
+// the orders row so this function cannot race with verify-razorpay-payment.
+//
+// For payment.failed: mark the order failed if still pending.
+//
 // LIVE SCHEMA BINDING (confirmed via supabase db query --linked, 2026-10-22)
-// orders: id (uuid NOT NULL), student_id (uuid NOT NULL), course_id (uuid NOT NULL),
-//         status (order_status NOT NULL, default 'pending'), razorpay_order_id (text NULL),
-//         razorpay_payment_id (text NULL)
-// courses: validity_days (int NOT NULL, default 365)
-// enrollments: student_id (uuid NOT NULL), course_id (uuid NOT NULL), payment_id (uuid NULL),
-//              status (enrollment_status NOT NULL, default 'active'),
-//              purchased_at (timestamptz NOT NULL, default now()), valid_until (timestamptz NOT NULL)
-// RPC: increment_student_count(p_course_id uuid) → courses.student_count (int NOT NULL, default 0)
-// No CORS — direct POST from Razorpay servers
-// No JWT — verify_jwt = false in config.toml; authenticates via X-Razorpay-Signature HMAC
+// orders: id (uuid NOT NULL), status (order_status NOT NULL), final_amount (numeric NOT NULL),
+//         razorpay_order_id (text NULL), razorpay_payment_id (text NULL)
+// RPC: complete_paid_order(uuid, text, text, bigint) → see migration 20261022100000
 
 import { serve } from 'https://deno.land/std@0.177.0/http/server.ts'
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.39.0'
@@ -17,9 +20,7 @@ const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!
 const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
 const RAZORPAY_WEBHOOK_SECRET = Deno.env.get('RAZORPAY_WEBHOOK_SECRET')!
 
-const DEFAULT_VALIDITY_DAYS = 365
-
-async function hmacSha256(key: string, message: string): Promise<string> {
+async function hmacSha256Hex(key: string, message: string): Promise<string> {
   const encoder = new TextEncoder()
   const cryptoKey = await crypto.subtle.importKey(
     'raw',
@@ -32,6 +33,16 @@ async function hmacSha256(key: string, message: string): Promise<string> {
   return Array.from(new Uint8Array(signature))
     .map((b) => b.toString(16).padStart(2, '0'))
     .join('')
+}
+
+// Constant-time string compare — see verify function for notes.
+function timingSafeEqual(a: string, b: string): boolean {
+  if (a.length !== b.length) return false
+  let diff = 0
+  for (let i = 0; i < a.length; i++) {
+    diff |= a.charCodeAt(i) ^ b.charCodeAt(i)
+  }
+  return diff === 0
 }
 
 serve(async (req) => {
@@ -47,9 +58,9 @@ serve(async (req) => {
       return new Response(JSON.stringify({ error: 'Missing signature' }), { status: 400 })
     }
 
-    const expectedSignature = await hmacSha256(RAZORPAY_WEBHOOK_SECRET, rawBody)
-    if (expectedSignature !== webhookSignature) {
-      console.error('Webhook signature mismatch')
+    const expectedSignature = await hmacSha256Hex(RAZORPAY_WEBHOOK_SECRET, rawBody)
+    if (!timingSafeEqual(expectedSignature, webhookSignature)) {
+      console.error('[webhook] signature mismatch')
       return new Response(JSON.stringify({ error: 'Invalid signature' }), { status: 400 })
     }
 
@@ -61,86 +72,62 @@ serve(async (req) => {
     if (eventType === 'payment.captured' || eventType === 'order.paid') {
       const payment = event.payload.payment?.entity
       const razorpayOrderId = payment?.order_id ?? event.payload.order?.entity?.id
-      const razorpayPaymentId = payment?.id
+      const razorpayPaymentId: string | undefined = payment?.id
+      const capturedAmount: number | undefined =
+        typeof payment?.amount === 'number' ? payment.amount : undefined
+      const currency: string | undefined = payment?.currency
 
-      if (!razorpayOrderId) {
-        console.error('No razorpay_order_id in webhook payload')
+      if (!razorpayOrderId || !razorpayPaymentId) {
+        console.error('[webhook] missing order_id/payment_id in payload')
         return new Response(JSON.stringify({ status: 'skipped' }), { status: 200 })
+      }
+
+      if (currency && currency !== 'INR') {
+        console.error('[webhook] unexpected currency', currency)
+        return new Response(JSON.stringify({ status: 'skipped_currency' }), { status: 200 })
       }
 
       const { data: order } = await serviceClient
         .from('orders')
-        .select('id, student_id, course_id, status')
+        .select('id')
         .eq('razorpay_order_id', razorpayOrderId)
         .maybeSingle()
 
       if (!order) {
-        console.error('Order not found for razorpay_order_id:', razorpayOrderId)
+        console.error('[webhook] order not found for razorpay_order_id:', razorpayOrderId)
+        // 200 so Razorpay doesn't retry forever for an unknown order
         return new Response(JSON.stringify({ status: 'order_not_found' }), { status: 200 })
       }
 
-      if (order.status === 'completed') {
-        return new Response(JSON.stringify({ status: 'already_completed' }), { status: 200 })
-      }
-
-      await serviceClient
-        .from('orders')
-        .update({
-          status: 'completed',
-          razorpay_payment_id: razorpayPaymentId,
-        })
-        .eq('id', order.id)
-        .neq('status', 'completed')
-
-      const { data: course } = await serviceClient
-        .from('courses')
-        .select('validity_days')
-        .eq('id', order.course_id)
-        .single()
-
-      const validityDays = course?.validity_days ?? DEFAULT_VALIDITY_DAYS
-      const validUntil = new Date()
-      validUntil.setDate(validUntil.getDate() + validityDays)
-
-      // Only increment the counter when the enrollment is actually new, so
-      // the webhook doesn't double-count a payment the client verify already
-      // settled.
-      const { data: existingEnrollment } = await serviceClient
-        .from('enrollments')
-        .select('id')
-        .eq('student_id', order.student_id)
-        .eq('course_id', order.course_id)
-        .maybeSingle()
-
-      const isNewEnrollment = !existingEnrollment
-
-      await serviceClient
-        .from('enrollments')
-        .upsert(
-          {
-            student_id: order.student_id,
-            course_id: order.course_id,
-            payment_id: order.id,
-            status: 'active',
-            purchased_at: new Date().toISOString(),
-            valid_until: validUntil.toISOString(),
-          },
-          { onConflict: 'student_id,course_id' }
-        )
-
-      if (isNewEnrollment) {
-        // supabase-js RPC errors do NOT throw — they land in `error`, so a
-        // `.catch()` here is a no-op. Read `error` directly instead.
-        const { error: rpcError } = await serviceClient.rpc(
-          'increment_student_count',
-          { p_course_id: order.course_id }
-        )
-        if (rpcError) {
-          console.error('increment_student_count error:', rpcError)
+      const { data: completion, error: rpcError } = await serviceClient.rpc(
+        'complete_paid_order',
+        {
+          p_order_id: order.id,
+          p_razorpay_payment_id: razorpayPaymentId,
+          p_razorpay_signature: webhookSignature,
+          p_captured_paise: capturedAmount ?? null,
         }
+      )
+      if (rpcError) {
+        console.error('[webhook] complete_paid_order error:', rpcError)
+        // 500 → Razorpay retries this event
+        return new Response(JSON.stringify({ error: 'RPC failed' }), { status: 500 })
       }
 
-      return new Response(JSON.stringify({ status: 'completed' }), { status: 200 })
+      const result = completion as { ok: boolean; reason?: string; already_completed?: boolean }
+      if (!result.ok) {
+        console.error('[webhook] completion rejected:', result.reason)
+        // amount_mismatch is a real anomaly — alert via logs, but 200 so Razorpay
+        // doesn't retry (the state won't change on retry anyway)
+        return new Response(JSON.stringify({ status: 'rejected', reason: result.reason }), {
+          status: 200,
+        })
+      }
+
+      return new Response(
+        JSON.stringify({ status: result.already_completed ? 'already_completed' : 'completed' }),
+        { status: 200 }
+      )
     }
 
     if (eventType === 'payment.failed') {
@@ -160,7 +147,7 @@ serve(async (req) => {
 
     return new Response(JSON.stringify({ status: 'ignored', event: eventType }), { status: 200 })
   } catch (err) {
-    console.error('Webhook processing error:', err)
+    console.error('[webhook] processing error:', err)
     return new Response(JSON.stringify({ error: 'Internal server error' }), { status: 500 })
   }
 })

@@ -67,7 +67,7 @@ function collectAllIds(nodes: TreeNode[]): string[] {
   return ids;
 }
 
-export const useContentTree = create<ContentTreeState>((set, get) => ({
+export const useContentTree = create<ContentTreeState>((set, _get) => ({
   courseId: null,
   tree: [],
   expandedIds: new Set<string>(),

@@ -68,7 +68,7 @@ export function RefundsTable({ initialData, initialCount }: RefundsTableProps) {
 
   useEffect(() => {
     loadData({ status, dateFrom, dateTo, page: 1, pageSize: PAGE_SIZE });
-    setPage(1);
+    startTransition(() => setPage(1));
   }, [status, dateFrom, dateTo, loadData]);
 
   function handlePageChange(newPage: number) {

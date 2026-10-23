@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { useState } from "react";
 import {
   Dialog,
@@ -17,7 +18,6 @@ import {
   ArrowRight,
 } from "lucide-react";
 import type { QuestionDraft } from "@/stores/test-builder";
-import type { QuestionType } from "@/types/database";
 
 interface TestPreviewProps {
   open: boolean;
@@ -139,10 +139,12 @@ export function TestPreview({
         return (
           <div className="space-y-3">
             {q.image_url && (
-              <img
+              <Image
                 src={q.image_url}
                 alt="Question"
-                className="max-h-48 rounded-lg border border-border object-contain"
+                width={800}
+                height={192}
+                className="max-h-48 w-auto rounded-lg border border-border object-contain"
               />
             )}
             <p className="text-xs text-muted-foreground">

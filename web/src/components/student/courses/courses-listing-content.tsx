@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo, useCallback } from "react";
+import { useState, useMemo, useCallback, useRef } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Search, BookOpen, X, SlidersHorizontal } from "lucide-react";
 import { CourseCard } from "@/components/student/course-card";
@@ -43,12 +43,10 @@ export function CoursesListingContent({
   const [sort, setSort] = useState<SortOption>("popular");
   const [debounced, setDebounced] = useState(query);
 
-  const debounceTimer = useMemo(() => {
-    let timer: ReturnType<typeof setTimeout>;
-    return (value: string) => {
-      clearTimeout(timer);
-      timer = setTimeout(() => setDebounced(value), 300);
-    };
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const debounceTimer = useCallback((value: string) => {
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    debounceRef.current = setTimeout(() => setDebounced(value), 300);
   }, []);
 
   const handleSearch = useCallback(

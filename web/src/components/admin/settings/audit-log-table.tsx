@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback, useRef, useTransition, useEffect } from "react";
+import { useState, useCallback, useRef, useTransition, useEffect, useMemo } from "react";
 import {
   Search, ChevronLeft, ChevronRight, Download, ChevronDown,
   ChevronRight as ChevronRightIcon,
@@ -60,13 +60,12 @@ export function AuditLogTable({ initialData, initialCount, adminUsers }: AuditLo
   const requestIdRef = useRef(0);
   const debounceRef = useRef<NodeJS.Timeout | null>(null);
 
-  const userMap = useRef<Record<string, string>>({});
-  useEffect(() => {
+  const userMap = useMemo(() => {
     const map: Record<string, string> = {};
     for (const u of adminUsers) {
       map[u.user_id] = u.full_name;
     }
-    userMap.current = map;
+    return map;
   }, [adminUsers]);
 
   const loadData = useCallback((filters: {
@@ -126,7 +125,7 @@ export function AuditLogTable({ initialData, initialCount, adminUsers }: AuditLo
       const header = ["Timestamp", "User", "Action", "Entity Type", "Entity ID", "IP Address"];
       const csvRows = rows.map((r) => [
         escapeCSV(new Date(r.created_at).toISOString()),
-        escapeCSV(userMap.current[r.user_id ?? ""] ?? r.user_id ?? "System"),
+        escapeCSV(userMap[r.user_id ?? ""] ?? r.user_id ?? "System"),
         escapeCSV(r.action),
         escapeCSV(r.entity_type),
         escapeCSV(r.entity_id ?? ""),
@@ -251,7 +250,7 @@ export function AuditLogTable({ initialData, initialCount, adminUsers }: AuditLo
                       {formatRelativeTime(row.created_at)}
                     </TableCell>
                     <TableCell className="text-sm">
-                      {userMap.current[row.user_id ?? ""] ?? "System"}
+                      {userMap[row.user_id ?? ""] ?? "System"}
                     </TableCell>
                     <TableCell>
                       <Badge variant="outline" className="text-xs font-mono">

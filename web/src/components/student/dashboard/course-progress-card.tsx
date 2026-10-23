@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import { formatRelativeTime } from "@/lib/format";
 import { Button } from "@/components/ui/button";
@@ -27,10 +28,12 @@ export function CourseProgressCard({
       {/* Thumbnail */}
       <div className="relative aspect-video w-full shrink-0 overflow-hidden bg-gradient-to-br from-brand-orange/20 to-brand-blue/20 sm:aspect-auto sm:w-40 lg:w-48">
         {thumbnailUrl ? (
-          <img
+          <Image
             src={thumbnailUrl}
             alt={title}
-            className="h-full w-full object-cover"
+            fill
+            sizes="(max-width: 640px) 100vw, 200px"
+            className="object-cover"
           />
         ) : (
           <div className="flex h-full min-h-[6rem] items-center justify-center">

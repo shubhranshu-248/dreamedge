@@ -231,7 +231,7 @@ export async function getOrderDetail(orderId: string) {
     await assertAdmin(["super_admin", "accountant"]);
     const supabase = await createClient();
 
-    const [orderResult, enrollmentResult] = await Promise.all([
+    const [orderResult, _enrollmentResult] = await Promise.all([
       supabase
         .from("orders")
         .select(

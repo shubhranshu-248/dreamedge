@@ -13,8 +13,6 @@ import {
   ChevronDown,
   ChevronUp,
   Pencil,
-  Check,
-  X,
 } from "lucide-react";
 import { McqSingle } from "./question-types/mcq-single";
 import { McqMultiple } from "./question-types/mcq-multiple";
@@ -24,7 +22,7 @@ import { MatchPair } from "./question-types/match-pair";
 import { Subjective } from "./question-types/subjective";
 import { ImageBased } from "./question-types/image-based";
 import type { QuestionDraft } from "@/stores/test-builder";
-import type { QuestionType, Difficulty } from "@/types/database";
+import type { Difficulty } from "@/types/database";
 import type { Json } from "@/types/supabase";
 
 interface QuestionCardProps {
@@ -58,11 +56,6 @@ const typeLabels: Record<string, string> = {
   image_based: "Image Based",
 };
 
-function getOptionsFromQuestion(q: QuestionDraft) {
-  const opts = q.options || {};
-  return opts;
-}
-
 export function QuestionCard({
   question,
   index,
@@ -89,12 +82,6 @@ export function QuestionCard({
     transition,
     opacity: isDragging ? 0.5 : 1,
   };
-
-  function updateOptions(key: string, value: unknown) {
-    onUpdate({
-      options: { ...((question.options as Record<string, unknown>) || {}), [key]: value } as unknown as Json,
-    });
-  }
 
   function renderAnswerArea() {
     const opts = (question.options || {}) as Record<string, unknown>;

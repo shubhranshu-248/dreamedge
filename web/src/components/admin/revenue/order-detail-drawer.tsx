@@ -48,7 +48,7 @@ export function OrderDetailDrawer({ orderId, onClose }: OrderDetailDrawerProps) 
 
   useEffect(() => {
     if (!orderId) {
-      setDetail(null);
+      startTransition(() => setDetail(null));
       return;
     }
     startTransition(async () => {

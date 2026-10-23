@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { useState, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { ImagePlus, Trash2, Loader2 } from "lucide-react";
@@ -109,10 +110,12 @@ export function ImageBased({
       <div>
         {imageUrl ? (
           <div className="relative inline-block">
-            <img
+            <Image
               src={imageUrl}
               alt="Question"
-              className="max-h-48 rounded-lg border border-border object-contain"
+              width={800}
+              height={192}
+              className="max-h-48 w-auto rounded-lg border border-border object-contain"
             />
             {!readOnly && (
               <Button

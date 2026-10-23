@@ -1,3 +1,4 @@
+import Image from "next/image";
 import Link from "next/link";
 import { Play, Camera, Send } from "lucide-react";
 
@@ -38,7 +39,7 @@ export function Footer({ socialLinks }: FooterProps) {
         <div className="grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-4">
           {/* Brand */}
           <div className="space-y-4">
-            <img src="/logo.jpg" alt="Dream Edge Online" className="h-12 w-auto" />
+            <Image src="/logo.jpg" alt="Dream Edge Online" width={48} height={48} className="h-12 w-auto" />
             <p className="text-sm leading-relaxed text-brand-gray">
               मजबूत नींव, शानदार भविष्य — Premium coaching for Classes 6-10 by
               IITian mentors.

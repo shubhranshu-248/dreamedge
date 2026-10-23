@@ -171,7 +171,7 @@ export async function duplicateTest(id: string) {
       return { error: "Something went wrong. Please try again." };
     }
 
-    const { id: _oldId, created_at, updated_at, ...rest } = test;
+    const { id: _oldId, created_at: _created_at, updated_at: _updated_at, ...rest } = test;
     const { data: newTest, error: insertErr } = await supabase
       .from("tests")
       .insert({
@@ -189,7 +189,7 @@ export async function duplicateTest(id: string) {
     }
 
     if (questions && questions.length > 0) {
-      const rows = questions.map(({ id: _qId, test_id, ...qRest }) => ({
+      const rows = questions.map(({ id: _qId, test_id: _test_id, ...qRest }) => ({
         ...qRest,
         test_id: newTest.id,
       }));

@@ -24,14 +24,12 @@ import {
   MoreHorizontal,
   Pencil,
   Copy,
-  Eye,
   Trash2,
   FileText,
 } from "lucide-react";
 import { toast } from "sonner";
 import { deleteTest, duplicateTest } from "@/app/admin/(panel)/content/tests/actions";
 import { formatRelativeTime } from "@/lib/format";
-import type { ContentStatus } from "@/types/database";
 
 interface TestRow {
   id: string;
@@ -64,7 +62,7 @@ export function TestListClient({ tests, courses }: TestListClientProps) {
   const router = useRouter();
   const [courseFilter, setCourseFilter] = useState<string>("all");
   const [statusFilter, setStatusFilter] = useState<string>("all");
-  const [isPending, startTransition] = useTransition();
+  const [_isPending, startTransition] = useTransition();
 
   const filtered = tests.filter((t) => {
     if (courseFilter !== "all" && t.course?.id !== courseFilter) return false;

@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { useState } from "react";
 import { signIn } from "./actions";
 
@@ -26,7 +27,7 @@ export default function AdminLoginPage() {
       <div className="w-full max-w-sm">
         {/* Logo & Brand */}
         <div className="text-center mb-8">
-          <img src="/logo.jpg" alt="Dream Edge" className="h-20 w-auto mx-auto mb-4" />
+          <Image src="/logo.jpg" alt="Dream Edge" width={80} height={80} priority className="h-20 w-auto mx-auto mb-4" />
           <p className="text-sm text-brand-gray mt-1">Admin Panel</p>
         </div>
 

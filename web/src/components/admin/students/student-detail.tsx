@@ -61,21 +61,19 @@ const statusColors: Record<string, string> = {
 
 export function StudentDetail({ studentId, onClose, onStatusChange }: StudentDetailProps) {
   const [detail, setDetail] = useState<Record<string, unknown> | null>(null);
-  const [loading, setLoading] = useState(false);
-  const [isPending, startTransition] = useTransition();
+  const [isFetching, startFetchTransition] = useTransition();
+  const [isUpdating, startUpdateTransition] = useTransition();
 
   useEffect(() => {
     if (!studentId) {
-      setDetail(null);
+      startFetchTransition(() => setDetail(null));
       return;
     }
 
     let cancelled = false;
-    setLoading(true);
-
-    fetchStudentDetail(studentId).then((result) => {
+    startFetchTransition(async () => {
+      const result = await fetchStudentDetail(studentId);
       if (cancelled) return;
-      setLoading(false);
       if (result.error) {
         toast.error(result.error);
         return;
@@ -96,7 +94,7 @@ export function StudentDetail({ studentId, onClose, onStatusChange }: StudentDet
 
   const handleStatusChange = (newStatus: "active" | "inactive" | "blocked") => {
     if (!studentId) return;
-    startTransition(async () => {
+    startUpdateTransition(async () => {
       const result = await updateStudentStatus(studentId, newStatus);
       if (result.error) {
         toast.error(result.error);
@@ -122,7 +120,7 @@ export function StudentDetail({ studentId, onClose, onStatusChange }: StudentDet
   return (
     <Sheet open={!!studentId} onOpenChange={(open) => !open && onClose()}>
       <SheetContent side="right" className="w-full sm:max-w-lg overflow-y-auto">
-        {loading ? (
+        {isFetching && !detail ? (
           <div className="space-y-4 p-4">
             <div className="flex items-center gap-4">
               <Skeleton className="h-12 w-12 rounded-full" />
@@ -160,7 +158,7 @@ export function StudentDetail({ studentId, onClose, onStatusChange }: StudentDet
                     size="sm"
                     variant="outline"
                     onClick={() => handleStatusChange("active")}
-                    disabled={isPending}
+                    disabled={isUpdating}
                   >
                     <ShieldCheck className="h-3.5 w-3.5 mr-1.5" />
                     Activate
@@ -172,13 +170,13 @@ export function StudentDetail({ studentId, onClose, onStatusChange }: StudentDet
                     variant="outline"
                     className="text-red-600 hover:text-red-700"
                     onClick={() => handleStatusChange("blocked")}
-                    disabled={isPending}
+                    disabled={isUpdating}
                   >
                     <ShieldBan className="h-3.5 w-3.5 mr-1.5" />
                     Block
                   </Button>
                 )}
-                {isPending && <Loader2 className="h-4 w-4 animate-spin self-center" />}
+                {isUpdating && <Loader2 className="h-4 w-4 animate-spin self-center" />}
               </div>
             </SheetHeader>
 

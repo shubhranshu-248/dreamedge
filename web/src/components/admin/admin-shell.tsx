@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
@@ -146,7 +147,7 @@ export function AdminShell({
     <>
       {/* Logo */}
       <div className="flex items-center gap-3 px-4 py-4 border-b border-border">
-        <img src="/logo.jpg" alt="Dream Edge" className="h-9 w-auto" />
+        <Image src="/logo.jpg" alt="Dream Edge" width={36} height={36} priority className="h-9 w-auto" />
         <div className="flex-1 min-w-0">
           <p className="text-sm text-muted-foreground">Admin Panel</p>
         </div>

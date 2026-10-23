@@ -45,8 +45,8 @@ export function QuestionBankModal({
 
   useEffect(() => {
     if (!open) return;
-    setSelected(new Set());
     startTransition(async () => {
+      setSelected(new Set());
       const result = await fetchQuestionBank();
       if (result.data) setQuestions(result.data as unknown as QuestionBankItem[]);
     });

@@ -22,7 +22,7 @@ interface PopularCoursesProps {
   courses: Course[];
 }
 
-function PlaceholderCard({ index }: { index: number }) {
+function PlaceholderCard({ index: _index }: { index: number }) {
   return (
     <div className="flex flex-col overflow-hidden rounded-xl border border-border bg-card">
       <div className="flex aspect-video items-center justify-center bg-gradient-to-br from-brand-orange/10 to-brand-blue/10">

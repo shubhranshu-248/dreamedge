@@ -12,6 +12,7 @@ import {
   HelpCircle,
   Share2,
   Copy,
+  FileText,
 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -85,6 +86,11 @@ const QUICK_ACTIONS = [
     icon: BookOpen,
     label: "My Courses",
     href: "/dashboard/my-courses",
+  },
+  {
+    icon: FileText,
+    label: "My Tests",
+    href: "/dashboard/tests",
   },
   {
     icon: Search,

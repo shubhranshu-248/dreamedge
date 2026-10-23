@@ -20,7 +20,11 @@ const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
 const RAZORPAY_KEY_ID = Deno.env.get('RAZORPAY_KEY_ID')!
 const RAZORPAY_KEY_SECRET = Deno.env.get('RAZORPAY_KEY_SECRET')!
 
-const ALLOWED_ORIGINS = (Deno.env.get('ALLOWED_ORIGINS') ?? 'https://dreamedge.online,https://dream-edge-olive.vercel.app').split(',')
+const ALLOWED_ORIGINS = (Deno.env.get('ALLOWED_ORIGINS') ??
+  'https://dreamedge.online,https://dream-edge-olive.vercel.app')
+  .split(',')
+  .map((s) => s.trim())
+  .filter(Boolean)
 
 function corsHeaders(req: Request): Record<string, string> {
   const origin = req.headers.get('Origin')

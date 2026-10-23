@@ -75,7 +75,7 @@ export function TestimonialsClient({ initialData }: { initialData: Testimonial[]
   const [data, setData] = useState(initialData);
   const [showForm, setShowForm] = useState(false);
   const [editData, setEditData] = useState<Testimonial | null>(null);
-  const [isPending, startTransition] = useTransition();
+  const [_isPending, startTransition] = useTransition();
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),

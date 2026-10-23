@@ -38,7 +38,7 @@ import {
   deleteLead,
   convertLeadToStudent,
 } from "@/app/admin/(panel)/students/actions";
-import type { Lead, LeadStatus, LeadSource } from "@/types/database";
+import type { Lead } from "@/types/database";
 
 const statusColors: Record<string, string> = {
   new: "bg-blue-500/10 text-blue-600 dark:text-blue-400",

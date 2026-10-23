@@ -1,6 +1,6 @@
 "use client";
 
-import { FolderOpen, BookOpen, FileText, Video } from "lucide-react";
+import { FolderOpen, BookOpen } from "lucide-react";
 import { useContentTree } from "@/stores/content-tree";
 import { useShallow } from "zustand/react/shallow";
 import { SubjectForm } from "./subject-form";
