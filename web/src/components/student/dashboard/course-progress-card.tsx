@@ -84,7 +84,7 @@ export function CourseProgressCard({
           <Button
             size="sm"
             className="ml-auto bg-brand-orange text-white hover:bg-brand-orange-dark"
-            render={<Link href={`/courses/${slug}`} />}
+            render={<Link href={`/courses/${slug}/learn`} />}
           >
             Continue
           </Button>
