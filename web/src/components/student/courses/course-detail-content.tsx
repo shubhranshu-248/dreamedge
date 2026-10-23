@@ -453,6 +453,36 @@ export function CourseDetailContent({ course, isEnrolled = false }: CourseDetail
                 </li>
               </ul>
 
+              {/* Trust strip */}
+              <div className="mt-6 rounded-lg border border-border bg-muted/40 p-3 dark:bg-white/[0.02]">
+                <ul className="space-y-2 text-xs">
+                  <li className="flex items-start gap-2 text-foreground/80">
+                    <CheckCircle2 className="mt-0.5 h-3.5 w-3.5 shrink-0 text-emerald-600 dark:text-emerald-400" />
+                    <span>
+                      <strong className="text-foreground">7-day refund</strong> if less than 20% consumed
+                    </span>
+                  </li>
+                  <li className="flex items-start gap-2 text-foreground/80">
+                    <CheckCircle2 className="mt-0.5 h-3.5 w-3.5 shrink-0 text-emerald-600 dark:text-emerald-400" />
+                    <span>
+                      <strong className="text-foreground">Live classes</strong> + rewatch recordings
+                    </span>
+                  </li>
+                  <li className="flex items-start gap-2 text-foreground/80">
+                    <CheckCircle2 className="mt-0.5 h-3.5 w-3.5 shrink-0 text-emerald-600 dark:text-emerald-400" />
+                    <span>
+                      Learn on <strong className="text-foreground">mobile, laptop, tablet</strong>
+                    </span>
+                  </li>
+                  <li className="flex items-start gap-2 text-foreground/80">
+                    <CheckCircle2 className="mt-0.5 h-3.5 w-3.5 shrink-0 text-emerald-600 dark:text-emerald-400" />
+                    <span>
+                      <strong className="text-foreground">UPI, cards, net banking</strong> &mdash; secure via Razorpay
+                    </span>
+                  </li>
+                </ul>
+              </div>
+
               {/* Teacher */}
               {course.teacher_name && (
                 <div className="mt-6 border-t border-border pt-4">

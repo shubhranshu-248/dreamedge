@@ -155,17 +155,51 @@ export function CoursesListingContent({
   return (
     <div className="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
       {/* Header */}
-      <div className="mb-8">
+      <div className="mb-6 overflow-hidden rounded-2xl border border-border bg-gradient-to-br from-brand-orange/5 via-background to-brand-blue/5 p-6 sm:p-8">
         <div className="flex items-center gap-3">
-          <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">All Courses</h1>
+          <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">
+            Browse all courses
+          </h1>
           <Badge variant="secondary" className="tabular-nums">
             {filtered.length} {filtered.length === 1 ? "course" : "courses"}
           </Badge>
         </div>
-        <p className="mt-2 text-muted-foreground">
-          Explore our courses designed for Classes 6–10
+        <p className="mt-2 max-w-xl text-sm text-muted-foreground sm:text-base">
+          Concept-first foundation courses for Classes 6–10, built on the same
+          system Dream IIT Institute uses offline.
         </p>
       </div>
+
+      {/* Class pill filters — quick-pick row */}
+      {classes.length > 0 && (
+        <div className="mb-6 -mx-4 flex items-center gap-2 overflow-x-auto px-4 pb-1 sm:mx-0 sm:px-0">
+          <button
+            type="button"
+            onClick={() => handleClassChange("")}
+            className={`shrink-0 rounded-full border px-4 py-1.5 text-sm font-medium transition-colors ${
+              selectedClass === ""
+                ? "border-brand-orange bg-brand-orange text-white"
+                : "border-border bg-card text-foreground/70 hover:border-brand-orange/40 hover:text-foreground"
+            }`}
+          >
+            All classes
+          </button>
+          {classes.map((c) => (
+            <button
+              key={c}
+              type="button"
+              onClick={() => handleClassChange(c)}
+              className={`shrink-0 rounded-full border px-4 py-1.5 text-sm font-medium transition-colors ${
+                selectedClass === c
+                  ? "border-brand-orange bg-brand-orange text-white"
+                  : "border-border bg-card text-foreground/70 hover:border-brand-orange/40 hover:text-foreground"
+              }`}
+            >
+              {c}
+            </button>
+          ))}
+        </div>
+      )}
 
       {/* Filter Bar */}
       <div className="mb-8 flex flex-wrap items-center gap-3">
