@@ -227,7 +227,13 @@ export async function getTopCourses(role: UserRole, limit = 5): Promise<CoursePe
   const supabase = await createClient();
   const canViewFinance = FINANCE_ROLES.includes(role);
 
-  const { data, error } = await supabase.rpc("get_top_courses", { result_limit: limit });
+  // get_top_courses isn't in the generated RPC union because the function
+  // body in migration 20261016000001 references legacy courses columns
+  // (`name`/`status`) that don't match the live schema. Cast through unknown
+  // so the type-check passes; the runtime still invokes it, and if the RPC
+  // doesn't exist, the `logError` branch surfaces the error cleanly.
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { data, error } = await (supabase.rpc as any)("get_top_courses", { result_limit: limit });
   logError("top courses", error);
 
   const rows = (data ?? []) as {

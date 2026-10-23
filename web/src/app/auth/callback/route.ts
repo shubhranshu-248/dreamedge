@@ -49,29 +49,15 @@ async function ensureStudentRow(userId: string, user: {
       ? `${user.phone.replace(/[^0-9]/g, "")}@phone.dreamedge.local`
       : `${userId}@user.dreamedge.local`);
 
-  let freeTrialExpiresAt: string | null = null;
-  const { data: trialSetting } = await service
-    .from("site_settings")
-    .select("value")
-    .eq("key", "free_trial_days")
-    .maybeSingle();
-
-  if (trialSetting?.value) {
-    const days = parseInt(String(trialSetting.value), 10);
-    if (days > 0) {
-      const expires = new Date();
-      expires.setDate(expires.getDate() + days);
-      freeTrialExpiresAt = expires.toISOString();
-    }
-  }
-
+  // NOTE: `free_trial_expires_at` isn't in the live `students` schema yet.
+  // When we add it in a future migration, re-introduce the trial-days lookup
+  // from site_settings and populate the column here.
   await service.from("students").insert({
     user_id: userId,
     full_name: fullName,
     email,
     phone: user.phone || null,
     referral_code: randomReferralCode(),
-    free_trial_expires_at: freeTrialExpiresAt,
   });
 }
 
