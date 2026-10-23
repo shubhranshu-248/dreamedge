@@ -17,6 +17,7 @@ import {
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { StatCard } from "./stat-card";
+import { Badge } from "@/components/ui/badge";
 import { CourseProgressCard } from "./course-progress-card";
 
 interface DashboardStats {
@@ -40,6 +41,17 @@ interface Enrollment {
   } | null;
 }
 
+export interface UpcomingLiveClass {
+  id: string;
+  title: string;
+  scheduled_at: string;
+  duration_minutes: number;
+  meeting_url: string | null;
+  platform: string | null;
+  status: "scheduled" | "live";
+  course: { id: string; title: string; slug: string } | null;
+}
+
 interface DashboardContentProps {
   student: {
     id: string;
@@ -50,6 +62,7 @@ interface DashboardContentProps {
     [key: string]: unknown;
   };
   enrollments: Enrollment[];
+  upcomingClasses: UpcomingLiveClass[];
   stats: DashboardStats;
 }
 
@@ -112,6 +125,7 @@ const QUICK_ACTIONS = [
 export function DashboardContent({
   student,
   enrollments,
+  upcomingClasses,
   stats,
 }: DashboardContentProps) {
   const firstName = getFirstName(student.full_name);
@@ -249,17 +263,101 @@ export function DashboardContent({
         </div>
       </div>
 
-      {/* Recent Activity */}
+      {/* Upcoming live classes */}
       <div className="mt-8">
-        <h2 className="text-lg font-semibold text-foreground">
-          Recent Activity
-        </h2>
-        <div className="mt-4 flex flex-col items-center rounded-xl border border-dashed border-border bg-card/50 px-6 py-10 text-center">
-          <Clock className="h-8 w-8 text-muted-foreground" />
-          <p className="mt-3 text-sm text-muted-foreground">
-            No activity yet. Start a course to see your progress here.
-          </p>
+        <div className="flex items-center justify-between">
+          <h2 className="text-lg font-semibold text-foreground">
+            Upcoming live classes
+          </h2>
+          {upcomingClasses.length > 0 && (
+            <Link
+              href="/dashboard/my-courses"
+              className="text-sm font-medium text-brand-orange hover:text-brand-orange-dark"
+            >
+              See all
+            </Link>
+          )}
         </div>
+        {upcomingClasses.length === 0 ? (
+          <div className="mt-4 flex flex-col items-center rounded-xl border border-dashed border-border bg-card/50 px-6 py-10 text-center">
+            <Clock className="h-8 w-8 text-muted-foreground" />
+            <p className="mt-3 text-sm text-muted-foreground">
+              No live classes scheduled for your courses yet.
+            </p>
+          </div>
+        ) : (
+          <ul className="mt-4 space-y-3">
+            {upcomingClasses.map((cls) => {
+              const date = new Date(cls.scheduled_at);
+              const isLive = cls.status === "live";
+              const fmt = new Intl.DateTimeFormat("en-IN", {
+                weekday: "short",
+                day: "numeric",
+                month: "short",
+                hour: "numeric",
+                minute: "2-digit",
+                hour12: true,
+                timeZone: "Asia/Kolkata",
+              });
+              return (
+                <li
+                  key={cls.id}
+                  className={`flex flex-col gap-3 rounded-xl border p-4 sm:flex-row sm:items-center sm:justify-between ${
+                    isLive
+                      ? "border-red-500/40 bg-red-500/5"
+                      : "border-border bg-card"
+                  }`}
+                >
+                  <div className="min-w-0 flex-1">
+                    <div className="flex flex-wrap items-center gap-2">
+                      {cls.course?.title && (
+                        <span className="text-xs font-medium text-muted-foreground">
+                          {cls.course.title}
+                        </span>
+                      )}
+                      {isLive && (
+                        <span className="inline-flex items-center gap-1 rounded-full bg-red-500 px-2 py-0.5 text-xs font-semibold text-white">
+                          <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-white" />
+                          LIVE
+                        </span>
+                      )}
+                    </div>
+                    <p className="mt-1 text-base font-semibold text-foreground">
+                      {cls.title}
+                    </p>
+                    <p className="mt-0.5 text-xs text-muted-foreground">
+                      <Clock className="mr-1 inline h-3 w-3" />
+                      {fmt.format(date)} IST &middot; {cls.duration_minutes} min
+                    </p>
+                  </div>
+                  {cls.meeting_url ? (
+                    <Button
+                      size="sm"
+                      className={
+                        isLive
+                          ? "bg-red-500 text-white hover:bg-red-600"
+                          : "bg-brand-orange text-white hover:bg-brand-orange-dark"
+                      }
+                      render={
+                        <a
+                          href={cls.meeting_url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                        />
+                      }
+                    >
+                      {isLive ? "Join now" : "Open link"}
+                    </Button>
+                  ) : (
+                    <Badge variant="secondary" className="shrink-0">
+                      In-app class
+                    </Badge>
+                  )}
+                </li>
+              );
+            })}
+          </ul>
+        )}
       </div>
     </div>
   );

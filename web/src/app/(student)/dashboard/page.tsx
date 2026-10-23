@@ -79,12 +79,44 @@ async function fetchHoursLearned(completedLessonIds: string[]) {
   }
 }
 
+async function fetchUpcomingLiveClasses(studentId: string) {
+  try {
+    const supabase = await createClient();
+    const { data: enrollments } = await supabase
+      .from("enrollments")
+      .select("course_id, valid_until, status")
+      .eq("student_id", studentId)
+      .eq("status", "active");
+    const courseIds = (enrollments ?? [])
+      .filter((e) => !e.valid_until || new Date(e.valid_until) > new Date())
+      .map((e) => e.course_id);
+    if (courseIds.length === 0) return [];
+
+    const nowIso = new Date().toISOString();
+    const { data } = await supabase
+      .from("live_classes")
+      .select(
+        `id, title, scheduled_at, duration_minutes, meeting_url, platform, status,
+         course:courses(id, title, slug)`
+      )
+      .in("course_id", courseIds)
+      .in("status", ["scheduled", "live"])
+      .gte("scheduled_at", nowIso)
+      .order("scheduled_at", { ascending: true })
+      .limit(3);
+    return data ?? [];
+  } catch {
+    return [];
+  }
+}
+
 export default async function DashboardPage() {
   const student = await requireStudent();
 
-  const [enrollments, progress] = await Promise.all([
+  const [enrollments, progress, upcomingClasses] = await Promise.all([
     fetchEnrolledCourses(student.id),
     fetchStudentProgress(student.id),
+    fetchUpcomingLiveClasses(student.id),
   ]);
 
   const completedProgress = progress.filter(
@@ -109,6 +141,7 @@ export default async function DashboardPage() {
     <DashboardContent
       student={student}
       enrollments={enrollments}
+      upcomingClasses={upcomingClasses as unknown as import("@/components/student/dashboard/dashboard-content").UpcomingLiveClass[]}
       stats={{
         enrolledCourses: enrollments.length,
         completedLessons,
