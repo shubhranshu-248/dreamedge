@@ -1,16 +1,36 @@
 import type { Metadata } from "next";
+import {
+  listLiveClasses,
+  listTeachers,
+  listCoursesForSchedule,
+} from "./actions";
+import { LiveClassesContent } from "@/components/admin/live-classes/live-classes-content";
 
 export const metadata: Metadata = {
   title: "Live Classes | Dream Edge Admin",
 };
 
-export default function LiveClassesPage() {
+export const instant = false;
+
+export default async function LiveClassesPage() {
+  const [scheduled, live, pendingRecording, rewatchLibrary, teachers, courses] =
+    await Promise.all([
+      listLiveClasses("scheduled"),
+      listLiveClasses("live"),
+      listLiveClasses("pending_recording"),
+      listLiveClasses("rewatch_library"),
+      listTeachers(),
+      listCoursesForSchedule(),
+    ]);
+
   return (
-    <div className="flex flex-col items-center justify-center min-h-[60vh] gap-4">
-      <h1 className="text-2xl font-semibold">Live Classes</h1>
-      <p className="text-muted-foreground">
-        Live class scheduling and management is coming soon.
-      </p>
-    </div>
+    <LiveClassesContent
+      scheduled={scheduled}
+      live={live}
+      pendingRecording={pendingRecording}
+      rewatchLibrary={rewatchLibrary}
+      teachers={teachers}
+      courses={courses}
+    />
   );
 }

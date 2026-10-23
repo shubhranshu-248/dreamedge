@@ -66,8 +66,31 @@ serve(async (req) => {
 
     const event = JSON.parse(rawBody)
     const eventType: string = event.event
+    const eventId: string | undefined = event.id || event.event_id
 
     const serviceClient = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY)
+
+    // Idempotency: insert the event id. If it already exists, Razorpay is
+    // retrying — short-circuit so the DB stays untouched. We do this AFTER
+    // the signature check so forged duplicates can't poison the table.
+    if (eventId) {
+      const { error: dedupError } = await serviceClient
+        .from('webhook_events')
+        .insert({ event_id: eventId, event_type: eventType, payload: event })
+      if (dedupError) {
+        // 23505 = unique_violation
+        const code = (dedupError as { code?: string }).code
+        if (code === '23505') {
+          console.log('[webhook] duplicate event, skipping:', eventId)
+          return new Response(JSON.stringify({ status: 'duplicate', event_id: eventId }), {
+            status: 200,
+          })
+        }
+        // Other errors (e.g. table missing on first deploy) → log and continue;
+        // the per-order short-circuit still protects completed orders.
+        console.error('[webhook] webhook_events insert warning:', dedupError)
+      }
+    }
 
     if (eventType === 'payment.captured' || eventType === 'order.paid') {
       const payment = event.payload.payment?.entity

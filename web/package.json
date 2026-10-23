@@ -7,7 +7,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "db:types": "npx supabase gen types typescript --local > src/types/supabase.ts"
+    "db:types": "npx supabase gen types typescript --linked --schema public > src/types/supabase.ts"
   },
   "dependencies": {
     "@base-ui/react": "^1.9.0",
