@@ -196,3 +196,156 @@ export async function resetPassword(
 
   return { data: { updated: true } };
 }
+
+// -----------------------------------------------------------------------------
+// Phone OTP + OAuth helpers
+//
+// Supabase dashboard requirements:
+//   Auth -> Providers -> Phone must be enabled with an SMS provider
+//     (Twilio or MSG91 account configured with sender ID + credentials).
+//   Auth -> Providers -> Google must be enabled with a GCP OAuth client
+//     (Client ID + Secret).
+// If a server action here returns an error containing "provider is not enabled"
+// (or similar), the fix is in the Supabase dashboard, not this code.
+// -----------------------------------------------------------------------------
+
+const INDIAN_PHONE_RE = /^[6-9]\d{9}$/;
+
+/** Normalize a raw user-entered Indian phone number to E.164 (+91XXXXXXXXXX). */
+export function normalizeIndianPhone(raw: string): string | null {
+  if (!raw) return null;
+  const digits = raw.replace(/\D/g, "");
+  const ten = digits.startsWith("91") && digits.length === 12
+    ? digits.slice(2)
+    : digits.length === 10
+      ? digits
+      : null;
+  if (!ten || !INDIAN_PHONE_RE.test(ten)) return null;
+  return `+91${ten}`;
+}
+
+function isProviderDisabledError(message: string): boolean {
+  const m = message.toLowerCase();
+  return (
+    m.includes("provider is not enabled") ||
+    m.includes("provider not enabled") ||
+    m.includes("phone provider") ||
+    m.includes("sms provider") ||
+    m.includes("unsupported phone provider")
+  );
+}
+
+export async function startPhoneOtp(
+  phone: string
+): Promise<ActionResult<{ phone: string }>> {
+  const normalized = normalizeIndianPhone(phone);
+  if (!normalized) {
+    return { error: "Enter a valid 10-digit Indian mobile number." };
+  }
+
+  const supabase = await createClient();
+  const { error } = await supabase.auth.signInWithOtp({ phone: normalized });
+
+  if (error) {
+    if (isProviderDisabledError(error.message)) {
+      console.warn(
+        "[startPhoneOtp] Supabase phone provider is not enabled. " +
+          "Enable it in Auth -> Providers -> Phone with a Twilio/MSG91 account."
+      );
+      return {
+        error:
+          "SMS login is not configured yet. Please try email or Google sign-in.",
+      };
+    }
+    return { error: error.message };
+  }
+
+  return { data: { phone: normalized } };
+}
+
+export async function verifyPhoneOtp(
+  phone: string,
+  token: string
+): Promise<ActionResult<{ userId: string; isNew: boolean }>> {
+  const normalized = normalizeIndianPhone(phone);
+  if (!normalized) {
+    return { error: "Enter a valid 10-digit Indian mobile number." };
+  }
+
+  const cleanToken = (token || "").replace(/\D/g, "");
+  if (cleanToken.length < 4 || cleanToken.length > 10) {
+    return { error: "Enter the OTP you received by SMS." };
+  }
+
+  const supabase = await createClient();
+  const { data, error } = await supabase.auth.verifyOtp({
+    phone: normalized,
+    token: cleanToken,
+    type: "sms",
+  });
+
+  if (error) {
+    if (isProviderDisabledError(error.message)) {
+      console.warn(
+        "[verifyPhoneOtp] Supabase phone provider is not enabled. " +
+          "Enable it in Auth -> Providers -> Phone with a Twilio/MSG91 account."
+      );
+      return {
+        error:
+          "SMS login is not configured yet. Please try email or Google sign-in.",
+      };
+    }
+    return { error: "Invalid or expired OTP. Please try again." };
+  }
+
+  const userId = data.user?.id;
+  if (!userId) {
+    return { error: "Verification failed. Please try again." };
+  }
+
+  const service = createServiceClient();
+  const { data: existing } = await service
+    .from("students")
+    .select("id")
+    .eq("user_id", userId)
+    .maybeSingle();
+
+  if (existing) {
+    return { data: { userId, isNew: false } };
+  }
+
+  const referralCode = await generateReferralCode();
+
+  let freeTrialExpiresAt: string | null = null;
+  const { data: trialSetting } = await service
+    .from("site_settings")
+    .select("value")
+    .eq("key", "free_trial_days")
+    .maybeSingle();
+
+  if (trialSetting?.value) {
+    const days = parseInt(String(trialSetting.value), 10);
+    if (days > 0) {
+      const expires = new Date();
+      expires.setDate(expires.getDate() + days);
+      freeTrialExpiresAt = expires.toISOString();
+    }
+  }
+
+  const syntheticEmail = `${normalized.replace(/[^0-9]/g, "")}@phone.dreamedge.local`;
+
+  const { error: insertError } = await service.from("students").insert({
+    user_id: userId,
+    full_name: "Student",
+    email: syntheticEmail,
+    phone: normalized,
+    referral_code: referralCode,
+    free_trial_expires_at: freeTrialExpiresAt,
+  });
+
+  if (insertError) {
+    return { error: "Could not create your student profile. Please try again." };
+  }
+
+  return { data: { userId, isNew: true } };
+}

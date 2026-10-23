@@ -8,7 +8,15 @@ import { Loader2 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
+import {
+  Tabs,
+  TabsList,
+  TabsTrigger,
+  TabsContent,
+} from "@/components/ui/tabs";
 import { PasswordInput } from "@/components/student/auth/password-input";
+import { PhoneAuthForm } from "@/components/student/auth/phone-auth-form";
+import { GoogleButton } from "@/components/student/auth/google-button";
 import { loginStudent } from "@/app/(student)/auth/actions";
 
 export function LoginForm() {
@@ -50,56 +58,80 @@ export function LoginForm() {
         </div>
 
         <div className="rounded-xl border border-border bg-card p-6 shadow-sm">
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
-              <Input
-                id="email"
-                name="email"
-                type="email"
-                placeholder="you@example.com"
-                required
-                autoComplete="email"
-                disabled={pending}
-              />
-            </div>
+          <Tabs defaultValue="email" className="gap-5">
+            <TabsList className="w-full">
+              <TabsTrigger value="email">Email</TabsTrigger>
+              <TabsTrigger value="phone">Phone</TabsTrigger>
+              <TabsTrigger value="google">Google</TabsTrigger>
+            </TabsList>
 
-            <div className="space-y-2">
-              <div className="flex items-center justify-between">
-                <Label htmlFor="password">Password</Label>
-                <Link
-                  href="/forgot-password"
-                  className="text-xs text-brand-orange hover:text-brand-orange-dark transition-colors"
+            <TabsContent value="email">
+              <form onSubmit={handleSubmit} className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="email">Email</Label>
+                  <Input
+                    id="email"
+                    name="email"
+                    type="email"
+                    placeholder="you@example.com"
+                    required
+                    autoComplete="email"
+                    disabled={pending}
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <Label htmlFor="password">Password</Label>
+                    <Link
+                      href="/forgot-password"
+                      className="text-xs text-brand-orange hover:text-brand-orange-dark transition-colors"
+                    >
+                      Forgot Password?
+                    </Link>
+                  </div>
+                  <PasswordInput
+                    id="password"
+                    name="password"
+                    placeholder="Enter your password"
+                    required
+                    minLength={8}
+                    autoComplete="current-password"
+                    disabled={pending}
+                  />
+                </div>
+
+                <Button
+                  type="submit"
+                  disabled={pending}
+                  className="w-full h-10 bg-brand-orange text-white hover:bg-brand-orange-dark"
                 >
-                  Forgot Password?
-                </Link>
-              </div>
-              <PasswordInput
-                id="password"
-                name="password"
-                placeholder="Enter your password"
-                required
-                minLength={8}
-                autoComplete="current-password"
-                disabled={pending}
-              />
-            </div>
+                  {pending ? (
+                    <>
+                      <Loader2 className="size-4 animate-spin" />
+                      Logging in…
+                    </>
+                  ) : (
+                    "Login"
+                  )}
+                </Button>
+              </form>
+            </TabsContent>
 
-            <Button
-              type="submit"
-              disabled={pending}
-              className="w-full h-10 bg-brand-orange text-white hover:bg-brand-orange-dark"
-            >
-              {pending ? (
-                <>
-                  <Loader2 className="size-4 animate-spin" />
-                  Logging in…
-                </>
-              ) : (
-                "Login"
-              )}
-            </Button>
-          </form>
+            <TabsContent value="phone">
+              <PhoneAuthForm mode="login" />
+            </TabsContent>
+
+            <TabsContent value="google">
+              <div className="space-y-3 py-2">
+                <p className="text-sm text-muted-foreground">
+                  Continue with your Google account. We&apos;ll create your
+                  Dream Edge profile automatically if you&apos;re new.
+                </p>
+                <GoogleButton label="Continue with Google" />
+              </div>
+            </TabsContent>
+          </Tabs>
         </div>
 
         <p className="text-center text-sm text-muted-foreground mt-6">

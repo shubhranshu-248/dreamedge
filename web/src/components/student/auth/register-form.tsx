@@ -8,7 +8,15 @@ import { Loader2 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
+import {
+  Tabs,
+  TabsList,
+  TabsTrigger,
+  TabsContent,
+} from "@/components/ui/tabs";
 import { PasswordInput } from "@/components/student/auth/password-input";
+import { PhoneAuthForm } from "@/components/student/auth/phone-auth-form";
+import { GoogleButton } from "@/components/student/auth/google-button";
 import { registerStudent } from "@/app/(student)/auth/actions";
 
 const CLASS_OPTIONS = [
@@ -89,159 +97,186 @@ export function RegisterForm() {
         </div>
 
         <div className="rounded-xl border border-border bg-card p-6 shadow-sm">
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div className="space-y-2 sm:col-span-2">
-                <Label htmlFor="full_name">Full Name</Label>
-                <Input
-                  id="full_name"
-                  name="full_name"
-                  placeholder="Enter your full name"
-                  required
-                  minLength={2}
-                  autoComplete="name"
-                  disabled={pending}
-                />
-              </div>
+          <Tabs defaultValue="phone" className="gap-5">
+            <TabsList className="w-full">
+              <TabsTrigger value="email">Email</TabsTrigger>
+              <TabsTrigger value="phone">Phone</TabsTrigger>
+              <TabsTrigger value="google">Google</TabsTrigger>
+            </TabsList>
 
-              <div className="space-y-2">
-                <Label htmlFor="email">Email</Label>
-                <Input
-                  id="email"
-                  name="email"
-                  type="email"
-                  placeholder="you@example.com"
-                  required
-                  autoComplete="email"
-                  disabled={pending}
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="phone">Phone (optional)</Label>
-                <Input
-                  id="phone"
-                  name="phone"
-                  type="tel"
-                  placeholder="9876543210"
-                  autoComplete="tel"
-                  disabled={pending}
-                />
-              </div>
-
-              <div className="space-y-2 sm:col-span-2">
-                <Label htmlFor="class">Class</Label>
-                <select
-                  id="class"
-                  name="class"
-                  disabled={pending}
-                  className="h-8 w-full rounded-lg border border-input bg-transparent px-2.5 py-1 text-sm outline-none transition-colors focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 disabled:opacity-50"
-                  defaultValue=""
-                >
-                  <option value="" disabled>
-                    Select your class
-                  </option>
-                  {CLASS_OPTIONS.map((cls) => (
-                    <option key={cls} value={cls}>
-                      {cls}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="password">Password</Label>
-                <PasswordInput
-                  id="password"
-                  name="password"
-                  placeholder="Min. 8 characters"
-                  required
-                  minLength={8}
-                  autoComplete="new-password"
-                  disabled={pending}
-                  onChange={(e) => setPassword(e.target.value)}
-                />
-                {strengthLabel && (
-                  <div className="flex items-center gap-2">
-                    <div className="flex-1 h-1 rounded-full bg-muted overflow-hidden">
-                      <div
-                        className={`h-full rounded-full transition-all ${strengthColor}`}
-                        style={{
-                          width:
-                            password.length < 8
-                              ? "33%"
-                              : password.length < 12
-                                ? "66%"
-                                : "100%",
-                        }}
-                      />
-                    </div>
-                    <span className="text-xs text-muted-foreground">
-                      {strengthLabel}
-                    </span>
+            <TabsContent value="email">
+              <form onSubmit={handleSubmit} className="space-y-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div className="space-y-2 sm:col-span-2">
+                    <Label htmlFor="full_name">Full Name</Label>
+                    <Input
+                      id="full_name"
+                      name="full_name"
+                      placeholder="Enter your full name"
+                      required
+                      minLength={2}
+                      autoComplete="name"
+                      disabled={pending}
+                    />
                   </div>
-                )}
-              </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="confirm_password">Confirm Password</Label>
-                <PasswordInput
-                  id="confirm_password"
-                  name="confirm_password"
-                  placeholder="Re-enter password"
-                  required
-                  minLength={8}
-                  autoComplete="new-password"
+                  <div className="space-y-2">
+                    <Label htmlFor="email">Email</Label>
+                    <Input
+                      id="email"
+                      name="email"
+                      type="email"
+                      placeholder="you@example.com"
+                      required
+                      autoComplete="email"
+                      disabled={pending}
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="phone">Phone (optional)</Label>
+                    <Input
+                      id="phone"
+                      name="phone"
+                      type="tel"
+                      placeholder="9876543210"
+                      autoComplete="tel"
+                      disabled={pending}
+                    />
+                  </div>
+
+                  <div className="space-y-2 sm:col-span-2">
+                    <Label htmlFor="class">Class</Label>
+                    <select
+                      id="class"
+                      name="class"
+                      disabled={pending}
+                      className="h-8 w-full rounded-lg border border-input bg-transparent px-2.5 py-1 text-sm outline-none transition-colors focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 disabled:opacity-50"
+                      defaultValue=""
+                    >
+                      <option value="" disabled>
+                        Select your class
+                      </option>
+                      {CLASS_OPTIONS.map((cls) => (
+                        <option key={cls} value={cls}>
+                          {cls}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="password">Password</Label>
+                    <PasswordInput
+                      id="password"
+                      name="password"
+                      placeholder="Min. 8 characters"
+                      required
+                      minLength={8}
+                      autoComplete="new-password"
+                      disabled={pending}
+                      onChange={(e) => setPassword(e.target.value)}
+                    />
+                    {strengthLabel && (
+                      <div className="flex items-center gap-2">
+                        <div className="flex-1 h-1 rounded-full bg-muted overflow-hidden">
+                          <div
+                            className={`h-full rounded-full transition-all ${strengthColor}`}
+                            style={{
+                              width:
+                                password.length < 8
+                                  ? "33%"
+                                  : password.length < 12
+                                    ? "66%"
+                                    : "100%",
+                            }}
+                          />
+                        </div>
+                        <span className="text-xs text-muted-foreground">
+                          {strengthLabel}
+                        </span>
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="confirm_password">Confirm Password</Label>
+                    <PasswordInput
+                      id="confirm_password"
+                      name="confirm_password"
+                      placeholder="Re-enter password"
+                      required
+                      minLength={8}
+                      autoComplete="new-password"
+                      disabled={pending}
+                    />
+                  </div>
+
+                  <div className="space-y-2 sm:col-span-2">
+                    <Label htmlFor="referral_code">
+                      Referral Code (optional)
+                    </Label>
+                    <Input
+                      id="referral_code"
+                      name="referral_code"
+                      placeholder="Have a referral code?"
+                      disabled={pending}
+                    />
+                  </div>
+                </div>
+
+                <Button
+                  type="submit"
                   disabled={pending}
-                />
-              </div>
+                  className="w-full h-10 bg-brand-orange text-white hover:bg-brand-orange-dark"
+                >
+                  {pending ? (
+                    <>
+                      <Loader2 className="size-4 animate-spin" />
+                      Creating account…
+                    </>
+                  ) : (
+                    "Create Account"
+                  )}
+                </Button>
+              </form>
+            </TabsContent>
 
-              <div className="space-y-2 sm:col-span-2">
-                <Label htmlFor="referral_code">
-                  Referral Code (optional)
-                </Label>
-                <Input
-                  id="referral_code"
-                  name="referral_code"
-                  placeholder="Have a referral code?"
-                  disabled={pending}
-                />
+            <TabsContent value="phone">
+              <div className="space-y-4">
+                <p className="text-sm text-muted-foreground">
+                  Sign up instantly with your mobile number. You can add your
+                  name and class from your profile after logging in.
+                </p>
+                <PhoneAuthForm mode="register" />
               </div>
-            </div>
+            </TabsContent>
 
-            <Button
-              type="submit"
-              disabled={pending}
-              className="w-full h-10 bg-brand-orange text-white hover:bg-brand-orange-dark"
+            <TabsContent value="google">
+              <div className="space-y-3 py-2">
+                <p className="text-sm text-muted-foreground">
+                  Sign up with Google — we&apos;ll pull your name and email,
+                  and you can set your class later from your profile.
+                </p>
+                <GoogleButton label="Sign up with Google" />
+              </div>
+            </TabsContent>
+          </Tabs>
+
+          <p className="text-xs text-center text-muted-foreground mt-5">
+            By creating an account, you agree to our{" "}
+            <Link href="/terms" className="text-brand-orange hover:underline">
+              Terms of Service
+            </Link>{" "}
+            and{" "}
+            <Link
+              href="/privacy-policy"
+              className="text-brand-orange hover:underline"
             >
-              {pending ? (
-                <>
-                  <Loader2 className="size-4 animate-spin" />
-                  Creating account…
-                </>
-              ) : (
-                "Create Account"
-              )}
-            </Button>
-
-            <p className="text-xs text-center text-muted-foreground">
-              By creating an account, you agree to our{" "}
-              <Link
-                href="/terms"
-                className="text-brand-orange hover:underline"
-              >
-                Terms of Service
-              </Link>{" "}
-              and{" "}
-              <Link
-                href="/privacy-policy"
-                className="text-brand-orange hover:underline"
-              >
-                Privacy Policy
-              </Link>
-              .
-            </p>
-          </form>
+              Privacy Policy
+            </Link>
+            .
+          </p>
         </div>
 
         <p className="text-center text-sm text-muted-foreground mt-6">
