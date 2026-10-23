@@ -10,10 +10,48 @@
 --   5. Three competing SELECT policies on students; blocked/inactive
 --      students could still read their own row → consolidate into one
 --      policy that honours an is_active / status check
---   6. increment_student_count still callable by anon via REST → double
---      down (already revoked in previous migration, confirm here)
+--   6. increment_student_count still callable by anon via REST → confirm
+--      service-only grant
 --
 -- Safe to re-run.
+--
+-- NOTE: the hybrid live schema may be missing some helper functions from
+-- 20261012000001_rls_policies.sql. Define them defensively at the top so
+-- this migration never fails with "function does not exist".
+
+-- =========================================================================
+-- 0. Defensive helper functions (idempotent — matches 20261012000001)
+-- =========================================================================
+create or replace function public.is_admin()
+returns boolean
+language sql
+security definer
+stable
+set search_path = public, pg_temp
+as $$
+  select exists (
+    select 1 from public.admin_users
+     where user_id = auth.uid()
+       and coalesce(is_active, true) = true
+  );
+$$;
+
+create or replace function public.is_super_admin()
+returns boolean
+language sql
+security definer
+stable
+set search_path = public, pg_temp
+as $$
+  select exists (
+    select 1
+      from public.admin_users au
+      join public.roles r on r.id = au.role_id
+     where au.user_id = auth.uid()
+       and coalesce(au.is_active, true) = true
+       and r.name = 'super_admin'
+  );
+$$;
 
 
 -- =========================================================================
@@ -27,6 +65,9 @@ do $$
 begin
   if exists (select 1 from pg_policies where policyname = 'lessons_select_published' and tablename = 'lessons') then
     execute 'drop policy "lessons_select_published" on public.lessons';
+  end if;
+  if exists (select 1 from pg_policies where policyname = 'lessons_select_enrolled_or_admin' and tablename = 'lessons') then
+    execute 'drop policy "lessons_select_enrolled_or_admin" on public.lessons';
   end if;
 end $$;
 
@@ -62,14 +103,15 @@ begin
     select 1 from information_schema.columns
      where table_schema = 'public' and table_name = 'lessons' and column_name = 'is_free_preview'
   ) then
-    if not exists (select 1 from pg_policies where policyname = 'lessons_select_preview' and tablename = 'lessons') then
-      execute $sql$
-        create policy "lessons_select_preview"
-          on public.lessons for select
-          to anon, authenticated
-          using (is_published = true and is_free_preview = true)
-      $sql$;
+    if exists (select 1 from pg_policies where policyname = 'lessons_select_preview' and tablename = 'lessons') then
+      execute 'drop policy "lessons_select_preview" on public.lessons';
     end if;
+    execute $sql$
+      create policy "lessons_select_preview"
+        on public.lessons for select
+        to anon, authenticated
+        using (is_published = true and is_free_preview = true)
+    $sql$;
   end if;
 end $$;
 
@@ -77,9 +119,6 @@ end $$;
 -- =========================================================================
 -- 2. admin_users super-admin policy — add WITH CHECK
 -- =========================================================================
--- The old policy "Super admin full access to admin_users" has USING but no
--- WITH CHECK, so Postgres falls back to USING for inserts/updates — fine in
--- practice but defense in depth matters. Replace with explicit CHECK.
 do $$
 begin
   if exists (
@@ -88,6 +127,13 @@ begin
        and tablename  = 'admin_users'
   ) then
     execute 'drop policy "Super admin full access to admin_users" on public.admin_users';
+  end if;
+  if exists (
+    select 1 from pg_policies
+     where policyname = 'admin_users_super_admin_all'
+       and tablename  = 'admin_users'
+  ) then
+    execute 'drop policy "admin_users_super_admin_all" on public.admin_users';
   end if;
 end $$;
 
@@ -101,9 +147,17 @@ create policy "admin_users_super_admin_all"
 -- =========================================================================
 -- 3. refunds — auto-stamp processed_by = auth.uid()
 -- =========================================================================
--- The row-level policy ("Finance admins can manage refunds") verifies the
--- caller IS an admin, but doesn't enforce processed_by is set to them.
--- Add a BEFORE INSERT/UPDATE trigger that fills it in.
+do $$
+begin
+  if exists (
+    select 1 from information_schema.tables
+     where table_schema = 'public' and table_name = 'refunds'
+  ) then
+    -- defined below
+    null;
+  end if;
+end $$;
+
 create or replace function public.fill_refunds_processed_by()
 returns trigger
 language plpgsql
@@ -121,22 +175,24 @@ begin
 end;
 $$;
 
-drop trigger if exists trg_fill_refunds_processed_by on public.refunds;
-create trigger trg_fill_refunds_processed_by
-  before insert or update on public.refunds
-  for each row
-  execute function public.fill_refunds_processed_by();
+do $$
+begin
+  if exists (
+    select 1 from information_schema.tables
+     where table_schema = 'public' and table_name = 'refunds'
+  ) then
+    execute 'drop trigger if exists trg_fill_refunds_processed_by on public.refunds';
+    execute 'create trigger trg_fill_refunds_processed_by
+             before insert or update on public.refunds
+             for each row
+             execute function public.fill_refunds_processed_by()';
+  end if;
+end $$;
 
 
 -- =========================================================================
 -- 4. Webhook event-id idempotency
 -- =========================================================================
--- Razorpay legitimately re-delivers webhook events on 5xx responses. The
--- app-level `order.status === 'completed'` short-circuit catches the common
--- payment.captured retry, but doesn't help with payment.failed re-delivery
--- against a non-pending order, or with any future event types we add.
--- A tiny events table keyed on Razorpay's event id gives us exactly-once
--- processing with a single INSERT.
 create table if not exists public.webhook_events (
   event_id    text primary key,
   event_type  text not null,
@@ -147,18 +203,17 @@ create table if not exists public.webhook_events (
 
 alter table public.webhook_events enable row level security;
 
--- Only service_role (edge function) writes/reads.
 do $$
 begin
-  if not exists (select 1 from pg_policies where policyname = 'webhook_events_service_all' and tablename = 'webhook_events') then
-    execute $sql$
-      create policy "webhook_events_service_all"
-        on public.webhook_events for all
-        to service_role
-        using (true) with check (true)
-    $sql$;
+  if exists (select 1 from pg_policies where policyname = 'webhook_events_service_all' and tablename = 'webhook_events') then
+    execute 'drop policy "webhook_events_service_all" on public.webhook_events';
   end if;
 end $$;
+
+create policy "webhook_events_service_all"
+  on public.webhook_events for all
+  to service_role
+  using (true) with check (true);
 
 create index if not exists idx_webhook_events_received_at
   on public.webhook_events(received_at desc);
@@ -167,22 +222,13 @@ create index if not exists idx_webhook_events_received_at
 -- =========================================================================
 -- 5. students — consolidate competing SELECT policies + enforce active status
 -- =========================================================================
--- Three competing SELECT policies live across migrations:
---   "Students can view own profile" (20261012000001)
---   "students_select_own"           (20261016200000)
---   "students_self_read"            (20261022_qa_rls_public_read)
--- Postgres ORs them, which is correct for widening access, but hard to
--- reason about and none of them enforce active status.
---
--- Drop all three, add one canonical policy. Admins and service_role bypass
--- via their existing policies.
-
 do $$
 declare
   policies text[] := array[
     'Students can view own profile',
     'students_select_own',
-    'students_self_read'
+    'students_self_read',
+    'students_self_read_active'
   ];
   p text;
 begin
@@ -193,25 +239,16 @@ begin
   end loop;
 end $$;
 
--- Canonical self-read policy. Honours both schema variants:
---   initial-schema `status` enum (active/inactive/blocked)
---   second-schema  `is_active` boolean
--- Blocked students cannot read their own row. We treat null as active-by-default
--- so the policy still works on rows written before this constraint existed.
 create policy "students_self_read_active"
   on public.students
   for select
   to authenticated
   using (
     user_id = auth.uid()
-    and (
-      -- Honour whichever activity column exists in the live schema
-      coalesce(
-        -- is_active boolean (second schema)
-        (to_jsonb(students) ->> 'is_active')::boolean,
-        true
-      ) = true
-    )
+    and coalesce(
+      (to_jsonb(students) ->> 'is_active')::boolean,
+      true
+    ) = true
     and coalesce((to_jsonb(students) ->> 'status'), 'active') <> 'blocked'
   );
 
@@ -219,10 +256,6 @@ create policy "students_self_read_active"
 -- =========================================================================
 -- 6. Audit log on enrollment grants
 -- =========================================================================
--- The audit says "no audit log on enrollment grants". Add a trigger that
--- writes to audit_log on every insert/update to enrollments, when there's
--- a logged-in user we can attribute. Skip service_role writes (edge
--- functions) because those are already logged via the webhook_events table.
 create or replace function public.log_enrollment_change()
 returns trigger
 language plpgsql
@@ -232,7 +265,6 @@ as $$
 declare
   v_actor uuid := auth.uid();
 begin
-  -- Skip if we can't attribute (service_role writes have auth.uid() = null)
   if v_actor is null then
     return new;
   end if;
@@ -257,7 +289,6 @@ begin
   return new;
 exception
   when others then
-    -- Audit must never block the actual operation
     raise warning 'audit_log insert failed in enrollment trigger: %', sqlerrm;
     return new;
 end;
@@ -281,8 +312,6 @@ end $$;
 -- =========================================================================
 -- 7. Belt-and-braces: re-revoke RPCs that should be service-only
 -- =========================================================================
--- Repeated here in case someone restored an older migration or re-ran the
--- function with new GRANTs.
 do $$
 begin
   if exists (select 1 from pg_proc p join pg_namespace n on n.oid = p.pronamespace
