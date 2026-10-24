@@ -212,7 +212,7 @@ export async function resetPassword(
 const INDIAN_PHONE_RE = /^[6-9]\d{9}$/;
 
 /** Normalize a raw user-entered Indian phone number to E.164 (+91XXXXXXXXXX). */
-export function normalizeIndianPhone(raw: string): string | null {
+function normalizeIndianPhone(raw: string): string | null {
   if (!raw) return null;
   const digits = raw.replace(/\D/g, "");
   const ten = digits.startsWith("91") && digits.length === 12
