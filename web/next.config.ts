@@ -27,7 +27,7 @@ const nextConfig: NextConfig = {
     ],
   },
   // cacheComponents: true,
-  partialPrefetching: true,
+  // partialPrefetching: true,
   turbopack: {
     rules: {
       "*.css": {
