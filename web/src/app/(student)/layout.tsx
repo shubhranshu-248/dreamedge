@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+export const dynamic = "force-dynamic";
 import { StudentShell } from "@/components/student/student-shell";
 import { createClient } from "@/lib/supabase/server";
 
