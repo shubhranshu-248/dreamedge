@@ -1,6 +1,5 @@
 import { ForgotPasswordForm } from "@/components/student/auth/forgot-password-form";
 
-export const instant = false;
 
 export const metadata = {
   title: "Forgot Password",

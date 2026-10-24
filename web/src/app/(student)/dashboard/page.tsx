@@ -3,7 +3,6 @@ import { requireStudent } from "@/lib/auth-student";
 import { createClient } from "@/lib/supabase/server";
 import { DashboardContent } from "@/components/student/dashboard/dashboard-content";
 
-export const instant = false;
 
 export const metadata: Metadata = {
   title: "Dashboard",

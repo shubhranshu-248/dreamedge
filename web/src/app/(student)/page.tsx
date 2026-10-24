@@ -8,7 +8,6 @@ import { TestimonialsSection } from "@/components/student/home/testimonials-sect
 import { FaqSection } from "@/components/student/home/faq-section";
 import { CtaSection } from "@/components/student/home/cta-section";
 
-export const instant = false;
 
 async function fetchCourses() {
   try {

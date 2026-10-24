@@ -2,7 +2,6 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { LoginForm } from "@/components/student/auth/login-form";
 
-export const instant = false;
 
 export const metadata = {
   title: "Login",

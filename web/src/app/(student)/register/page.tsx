@@ -2,7 +2,6 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { RegisterForm } from "@/components/student/auth/register-form";
 
-export const instant = false;
 
 export const metadata = {
   title: "Register",

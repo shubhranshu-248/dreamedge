@@ -4,7 +4,6 @@ import { createClient } from "@/lib/supabase/server";
 import { CourseDetailContent } from "@/components/student/courses/course-detail-content";
 import type { Course } from "@/types/course";
 
-export const instant = false;
 
 interface PageProps {
   params: Promise<{ slug: string }>;

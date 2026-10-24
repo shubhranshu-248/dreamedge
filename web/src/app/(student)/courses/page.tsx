@@ -6,7 +6,6 @@ import type { Database } from "@/types/supabase";
 
 type CourseRow = Database["public"]["Tables"]["courses"]["Row"];
 
-export const instant = false;
 
 export const metadata: Metadata = {
   title: "Courses",

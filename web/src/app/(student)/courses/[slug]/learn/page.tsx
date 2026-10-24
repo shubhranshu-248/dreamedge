@@ -6,7 +6,6 @@ import type { Course } from "@/types/course";
 import type { Lesson, LessonProgress, LessonWithProgress } from "@/types/lesson";
 import { LearnContent } from "@/components/student/courses/learn-content";
 
-export const instant = false;
 
 interface PageProps {
   params: Promise<{ slug: string }>;

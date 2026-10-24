@@ -4,7 +4,6 @@ import { createClient } from "@/lib/supabase/server";
 import type { EnrollmentWithCourse } from "@/types/enrollment";
 import { MyCoursesContent } from "@/components/student/dashboard/my-courses-content";
 
-export const instant = false;
 
 export const metadata: Metadata = {
   title: "My Courses",

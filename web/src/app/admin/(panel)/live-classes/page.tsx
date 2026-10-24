@@ -10,7 +10,6 @@ export const metadata: Metadata = {
   title: "Live Classes | Dream Edge Admin",
 };
 
-export const instant = false;
 
 export default async function LiveClassesPage() {
   const [scheduled, live, pendingRecording, rewatchLibrary, teachers, courses] =
